@@ -310,6 +310,16 @@
   }
   .home-link:hover{transform:translate(1px,1px);box-shadow:1px 1px 0 #5b2d18}
 
+
+  .site-mini-nav{
+    display:flex;justify-content:center;gap:8px 12px;flex-wrap:wrap;margin:0 0 12px;
+  }
+  .site-mini-nav a{
+    color:inherit;text-decoration:none;font-size:13px;font-weight:800;
+    padding:5px 8px;border-bottom:2px solid transparent;
+  }
+  .site-mini-nav a:hover{border-bottom-color:currentColor}
+
 </style>
   <link rel="canonical" href="https://retro-playground.com/games/paper-soccer/">
 </head>
@@ -318,6 +328,12 @@
 
   <header class="site">
     <a class="home-link" href="/">← Retro-Playground 홈</a>
+    <nav class="site-mini-nav" aria-label="사이트 메뉴">
+      <a href="/guide/">게임 방법</a>
+      <a href="/tips/">공략</a>
+      <a href="/about/">사이트 소개</a>
+      <a href="/contact/">문의</a>
+    </nav>
     <h1>축 구 게 임 판</h1>
     <p>공의 타점을 찍고 힘을 조절해 골을 넣으세요</p>
   </header>
@@ -476,7 +492,9 @@
   </article>
 
   <footer class="site">
-    <a href="/" style="color:inherit;font-weight:800;">Retro-Playground 홈으로</a><br>축구 게임판 · 브라우저에서 즐기는 추억의 종이 축구 게임<br>
+    <a href="/" style="color:inherit;font-weight:800;">Retro-Playground 홈으로</a>
+    · <a href="/privacy/" style="color:inherit;font-weight:800;">개인정보처리방침</a>
+    · <a href="/contact/" style="color:inherit;font-weight:800;">문의</a><br>축구 게임판 · 브라우저에서 즐기는 추억의 종이 축구 게임<br>
     PC · 모바일 · 태블릿 지원 | 설치 불필요 | 무료
   </footer>
 </div>
