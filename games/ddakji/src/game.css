@@ -464,6 +464,10 @@ select:focus-visible {
   opacity: 0.42;
 }
 
+.settings-grid .wide-setting {
+  grid-column: 1 / -1;
+}
+
 .meter-block,
 .angle-control,
 .status-box,

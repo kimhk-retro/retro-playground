@@ -24,7 +24,7 @@ type UiState = {
   result: string;
 };
 
-type Settings = { mode: Mode; difficulty: Difficulty; tile: TileKey; count: number };
+type Settings = { mode: Mode; difficulty: Difficulty; tile: TileKey; opponentTile: TileKey; count: number };
 type GameApi = { start: (settings: Settings) => void; cancel: () => void };
 
 const initialUi: UiState = {
@@ -44,6 +44,7 @@ export default function Home() {
   const [mode, setMode] = useState<Mode>("ai");
   const [difficulty, setDifficulty] = useState<Difficulty>("normal");
   const [tile, setTile] = useState<TileKey>("note");
+  const [opponentTile, setOpponentTile] = useState<TileKey>("cal");
   const [count, setCount] = useState(3);
 
   useEffect(() => {
@@ -63,7 +64,7 @@ export default function Home() {
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFShadowMap;
-    renderer.domElement.setAttribute("aria-label", "3D 딱지치기 경기장");
+    renderer.domElement.setAttribute("aria-label", "딱지치기 경기장");
     host.appendChild(renderer.domElement);
 
     const hemi = new THREE.HemisphereLight(0xffe7bd, 0x2a160d, 2.15);
@@ -235,8 +236,7 @@ export default function Home() {
     let targetType: TileKey = "note";
     let mode: Mode = "ai";
     let difficulty: Difficulty = "normal";
-    let playerType: TileKey = "note";
-    let types: [TileKey, TileKey] = ["note", "note"];
+    let types: [TileKey, TileKey] = ["note", "cal"];
     let scores: [number, number] = [3, 3];
     let turn = 0;
     let phase: Phase = "menu";
@@ -366,7 +366,7 @@ export default function Home() {
         power: shotPower,
         tilt: shotTilt,
       };
-      message = `${attacker === 0 ? "플레이어 1" : mode === "ai" ? "AI" : "플레이어 2"}의 3D 내려치기!`;
+      message = `${attacker === 0 ? "플레이어 1" : mode === "ai" ? "AI" : "플레이어 2"}의 내려치기!`;
       syncUi(true);
     }
 
@@ -476,8 +476,7 @@ export default function Home() {
         roundToken++;
         mode = settings.mode;
         difficulty = settings.difficulty;
-        playerType = settings.tile;
-        types = [playerType, mode === "2p" ? playerType : difficulty === "easy" ? "news" : difficulty === "hard" ? "cal" : "note"];
+        types = [settings.tile, settings.opponentTile];
         scores = [settings.count, settings.count];
         turn = 0;
         result = "";
@@ -504,7 +503,7 @@ export default function Home() {
       },
     };
 
-    placeTarget(1, "note");
+    placeTarget(1, "cal");
 
     let raf = 0;
     let lastFrame = performance.now();
@@ -573,18 +572,18 @@ export default function Home() {
     };
   }, []);
 
-  const startGame = () => apiRef.current?.start({ mode, difficulty, tile, count });
+  const startGame = () => apiRef.current?.start({ mode, difficulty, tile, opponentTile, count });
   const tiltLabel = ui.tilt < 0.33 ? "눕혀치기" : ui.tilt > 0.66 ? "세워치기" : "비스듬히";
 
   return (
     <main className="page-shell">
       <header className="hero">
         <div>
-          <span className="eyebrow">RETRO PLAYGROUND · 3D GAME</span>
-          <h1>딱지치기 <em>3D</em></h1>
+          <span className="eyebrow">RETRO PLAYGROUND · WEB GAME</span>
+          <h1>딱지치기</h1>
           <p>타점과 힘, 치는 각도를 조절해 실제 두께와 공중 회전이 살아 있는 딱지를 내려쳐 보세요.</p>
         </div>
-        <div className="prototype-badge">3D EDITION · 설치 없이 플레이</div>
+        <div className="prototype-badge">ONLINE EDITION · 설치 없이 플레이</div>
       </header>
 
       <section className="game-layout">
@@ -599,10 +598,10 @@ export default function Home() {
           {ui.phase === "menu" && (
             <div className="stage-overlay">
               <div className="overlay-panel">
-                <span>3D 딱지치기</span>
+                <span>골목 딱지치기</span>
                 <h2>딱지를 직접 내려쳐 보세요</h2>
                 <p>상대 딱지 주변을 누른 채 위·아래로 움직여 각도를 조절하고, 힘 게이지의 원하는 지점에서 손을 떼세요.</p>
-                <button onClick={startGame}>3D 게임 시작</button>
+                <button onClick={startGame}>게임 시작</button>
               </div>
             </div>
           )}
@@ -621,7 +620,7 @@ export default function Home() {
 
         <aside className="control-card">
           <div className="control-heading">
-            <div><span>GAME CONTROL</span><h2>3D 조작</h2></div>
+            <div><span>GAME CONTROL</span><h2>게임 조작</h2></div>
             <i className={`phase-light ${ui.phase}`} />
           </div>
 
@@ -629,7 +628,8 @@ export default function Home() {
             <label>게임 모드<select value={mode} onChange={(e) => setMode(e.target.value as Mode)}><option value="ai">AI 대전</option><option value="2p">로컬 2인</option></select></label>
             <label>AI 실력<select value={difficulty} onChange={(e) => setDifficulty(e.target.value as Difficulty)} disabled={mode === "2p"}><option value="easy">쉬움</option><option value="normal">보통</option><option value="hard">어려움</option></select></label>
             <label>내 딱지<select value={tile} onChange={(e) => setTile(e.target.value as TileKey)}><option value="news">신문지</option><option value="note">공책</option><option value="cal">달력</option></select></label>
-            <label>시작 장수<select value={count} onChange={(e) => setCount(Number(e.target.value))}><option value={3}>3장</option><option value={5}>5장</option><option value={7}>7장</option></select></label>
+            <label>상대 딱지<select value={opponentTile} onChange={(e) => setOpponentTile(e.target.value as TileKey)}><option value="news">신문지</option><option value="note">공책</option><option value="cal">달력</option></select></label>
+            <label className="wide-setting">시작 장수<select value={count} onChange={(e) => setCount(Number(e.target.value))}><option value={3}>3장</option><option value={5}>5장</option><option value={7}>7장</option></select></label>
           </div>
 
           <div className="meter-block">
@@ -648,8 +648,8 @@ export default function Home() {
           <div className="button-row"><button className="primary" onClick={startGame}>{ui.phase === "menu" ? "게임 시작" : "처음부터"}</button><button className="secondary" onClick={() => apiRef.current?.cancel()} disabled={ui.phase !== "charge"}>조준 취소</button></div>
 
           <div className="test-notes">
-            <strong>3D 게임 특징</strong>
-            <ul><li>실제 두께가 다른 3종 딱지</li><li>포물선 비행과 회전</li><li>타점·힘·각도 기반 뒤집힘 판정</li><li>3D 그림자·카메라 충격·AI 공격</li></ul>
+            <strong>게임 특징</strong>
+            <ul><li>실제 두께가 다른 3종 딱지</li><li>포물선 비행과 회전</li><li>타점·힘·각도 기반 뒤집힘 판정</li><li>입체 그림자·카메라 충격·AI 공격</li></ul>
           </div>
         </aside>
       </section>
