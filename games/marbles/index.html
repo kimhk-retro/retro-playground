@@ -1564,10 +1564,11 @@ function evalHoleShot(sx,ang,pw,lf,me){
 }
 function thinkHoleAI(diffKey, me){
   const D=AIDIFF[diffKey]||AIDIFF.normal;
+  const live=S.pot.filter(m=>!m.gone);
   const xs=[];
   for(let i=0;i<3;i++) xs.push(LINE_X0+12+(LINE_X1-LINE_X0-24)*i/2);
   const targets=[{x:HOLE.x,y:HOLE.y}];
-  for(const m of S.pot) if(!m.gone) targets.push({x:m.x,y:m.y});
+  for(const m of live) targets.push({x:m.x,y:m.y});
   const cands=[];
   for(const sx of xs) for(const t of targets){
     const base=Math.atan2(t.y-LINE_Y, t.x-sx);
