@@ -4,14 +4,27 @@ import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 
 type TileKey = "news" | "note" | "cal";
+type TileFace = "front" | "back";
 type Mode = "ai" | "2p";
 type Difficulty = "easy" | "normal" | "hard";
 type Phase = "menu" | "aim" | "charge" | "throw" | "reaction" | "ai" | "ended";
 
 const TILE = {
-  news: { name: "신문지 딱지", size: 2.15, thickness: 0.12, hit: 0.9, mass: 0.86, accuracy: 1.15 },
-  note: { name: "공책 딱지", size: 1.95, thickness: 0.2, hit: 1, mass: 1, accuracy: 1 },
-  cal: { name: "달력 딱지", size: 1.78, thickness: 0.31, hit: 1.1, mass: 1.38, accuracy: 0.82 },
+  news: {
+    name: "신문지 딱지", size: 2.15, thickness: 0.12, hit: 0.95, mass: 0.86, accuracy: 1.15,
+    flatPower: 1.09, standPower: 0.82, middleBoost: 0.01, preferredTilt: 0.18,
+    flatVulnerability: 0.99, standVulnerability: 1.03, backBias: 0.05, styleName: "눕혀치기",
+  },
+  note: {
+    name: "공책 딱지", size: 1.95, thickness: 0.2, hit: 1, mass: 1, accuracy: 1,
+    flatPower: 0.98, standPower: 0.98, middleBoost: 0.06, preferredTilt: 0.5,
+    flatVulnerability: 1, standVulnerability: 1, backBias: 0, styleName: "비스듬히 치기",
+  },
+  cal: {
+    name: "달력 딱지", size: 1.78, thickness: 0.31, hit: 1.04, mass: 1.38, accuracy: 0.82,
+    flatPower: 0.82, standPower: 1.1, middleBoost: 0.01, preferredTilt: 0.82,
+    flatVulnerability: 1.04, standVulnerability: 0.98, backBias: -0.05, styleName: "세워치기",
+  },
 } as const;
 
 const FLIP_THRESHOLD = 0.95;
@@ -36,6 +49,8 @@ type UiState = {
   tilt: number;
   message: string;
   result: string;
+  activeType: TileKey;
+  targetFace: TileFace;
 };
 
 type Settings = { mode: Mode; difficulty: Difficulty; tile: TileKey; opponentTile: TileKey; count: number };
@@ -49,6 +64,8 @@ const initialUi: UiState = {
   tilt: 0.46,
   message: "게임을 시작해 보세요.",
   result: "",
+  activeType: "note",
+  targetFace: "front",
 };
 
 export default function Home() {
@@ -203,6 +220,56 @@ export default function Home() {
       return tex;
     }
 
+    function tileBackTexture(team: number, type: TileKey) {
+      const key = `back-${team}-${type}`;
+      const cached = textureCache.get(key);
+      if (cached) return cached;
+      const c = document.createElement("canvas");
+      c.width = c.height = 512;
+      const g = c.getContext("2d")!;
+      const accent = team === 0 ? "#274d9d" : "#a42a22";
+      const paper = type === "news" ? "#d8ceb5" : type === "note" ? "#cdbd99" : "#b7a078";
+      g.fillStyle = paper;
+      g.fillRect(0, 0, 512, 512);
+      g.globalAlpha = 0.2;
+      g.fillStyle = accent;
+      for (let i = 0; i < 4; i++) {
+        g.save();
+        g.translate(256, 256);
+        g.rotate(i * Math.PI / 2);
+        g.beginPath();
+        g.moveTo(0, 0);
+        g.lineTo(-256, -256);
+        g.lineTo(256, -256);
+        g.closePath();
+        g.fill();
+        g.restore();
+      }
+      g.globalAlpha = 0.48;
+      g.strokeStyle = "#6e5b3e";
+      g.lineWidth = type === "cal" ? 13 : 9;
+      g.beginPath();
+      g.moveTo(18, 18); g.lineTo(494, 494);
+      g.moveTo(494, 18); g.lineTo(18, 494);
+      g.stroke();
+      g.globalAlpha = 0.7;
+      g.fillStyle = accent;
+      g.save();
+      g.translate(256, 256);
+      g.rotate(Math.PI / 4);
+      g.fillRect(-48, -48, 96, 96);
+      g.restore();
+      g.globalAlpha = 1;
+      g.strokeStyle = "rgba(48,30,17,.78)";
+      g.lineWidth = 18;
+      g.strokeRect(9, 9, 494, 494);
+      const tex = new THREE.CanvasTexture(c);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+      textureCache.set(key, tex);
+      return tex;
+    }
+
     function createTile(team: number, type: TileKey) {
       const t = TILE[type];
       const group = new THREE.Group();
@@ -211,12 +278,11 @@ export default function Home() {
         new THREE.MeshStandardMaterial({ color: edgeColor, roughness: 0.72 }),
         new THREE.MeshStandardMaterial({ color: edgeColor, roughness: 0.72 }),
         new THREE.MeshStandardMaterial({ map: tileTexture(team, type), roughness: 0.7 }),
-        new THREE.MeshStandardMaterial({ color: 0xc9b990, roughness: 0.95 }),
+        new THREE.MeshStandardMaterial({ map: tileBackTexture(team, type), roughness: 0.95 }),
         new THREE.MeshStandardMaterial({ color: edgeColor, roughness: 0.72 }),
         new THREE.MeshStandardMaterial({ color: edgeColor, roughness: 0.72 }),
       ];
       const body = new THREE.Mesh(new THREE.BoxGeometry(t.size, t.thickness, t.size), mats);
-      body.position.y = t.thickness / 2;
       body.castShadow = true;
       body.receiveShadow = true;
       group.add(body);
@@ -224,10 +290,25 @@ export default function Home() {
         new THREE.EdgesGeometry(new THREE.BoxGeometry(t.size * 1.002, t.thickness * 1.02, t.size * 1.002)),
         new THREE.LineBasicMaterial({ color: 0x2a140b, transparent: true, opacity: 0.72 })
       );
-      seam.position.y = t.thickness / 2;
       group.add(seam);
-      group.userData = { team, type };
+      group.userData = { team, type, face: "front" as TileFace };
       return group;
+    }
+
+    function restingHeight(type: TileKey) {
+      return TILE[type].thickness / 2 + 0.015;
+    }
+
+    function setRestingFace(tile: THREE.Group, type: TileKey, face: TileFace, yaw: number) {
+      tile.position.y = restingHeight(type);
+      tile.rotation.set(face === "back" ? Math.PI : 0, yaw, 0);
+      tile.userData.face = face;
+    }
+
+    function landingFace(type: TileKey, shotTilt: number): TileFace {
+      const baseChance = shotTilt < 0.33 ? 0.25 : shotTilt > 0.66 ? 0.45 : 0.35;
+      const backChance = THREE.MathUtils.clamp(baseChance + TILE[type].backBias, 0.18, 0.52);
+      return Math.random() < backChance ? "back" : "front";
     }
 
     const aimMarker = new THREE.Group();
@@ -248,6 +329,7 @@ export default function Home() {
     let targetTile: THREE.Group | null = null;
     let attackTile: THREE.Group | null = null;
     let targetType: TileKey = "note";
+    let targetFace: TileFace = "front";
     let mode: Mode = "ai";
     let difficulty: Difficulty = "normal";
     let types: [TileKey, TileKey] = ["note", "cal"];
@@ -261,7 +343,7 @@ export default function Home() {
     let charge: null | { startTime: number; startY: number; pointerId: number; initialTilt: number } = null;
     const aimPoint = new THREE.Vector3(0, 0, -1.3);
     let flight: null | { start: THREE.Vector3; end: THREE.Vector3; started: number; duration: number; attacker: number; power: number; tilt: number } = null;
-    let reaction: null | { started: number; duration: number; flipped: boolean; axis: "x" | "z"; push: THREE.Vector3; baseY: number; baseRx: number; baseRz: number } = null;
+    let reaction: null | { started: number; duration: number; flipped: boolean; axis: "x" | "z"; push: THREE.Vector3; baseY: number; baseRx: number; baseRz: number; landingFace: TileFace } = null;
     let roundToken = 0;
     let lastUiSync = 0;
     let cameraKick = 0;
@@ -270,7 +352,17 @@ export default function Home() {
       const now = performance.now();
       if (!force && now - lastUiSync < 45) return;
       lastUiSync = now;
-      setUi({ phase, turn, scores: [...scores] as [number, number], power, tilt, message, result });
+      setUi({
+        phase,
+        turn,
+        scores: [...scores] as [number, number],
+        power,
+        tilt,
+        message,
+        result,
+        activeType: types[turn],
+        targetFace,
+      });
     }
 
     function clearTile(tile: THREE.Group | null) {
@@ -281,10 +373,10 @@ export default function Home() {
     function placeTarget(owner: number, type: TileKey, position = new THREE.Vector3(0, 0, -1.3)) {
       clearTile(targetTile);
       targetType = type;
+      targetFace = "front";
       targetTile = createTile(owner, type);
       targetTile.position.copy(position);
-      targetTile.position.y = 0.015;
-      targetTile.rotation.set(0, (Math.random() - 0.5) * 0.55, 0);
+      setRestingFace(targetTile, type, targetFace, (Math.random() - 0.5) * 0.55);
       scene.add(targetTile);
     }
 
@@ -371,9 +463,10 @@ export default function Home() {
       attackTile.position.copy(start);
       attackTile.rotation.y = attacker === 0 ? 0 : Math.PI;
       scene.add(attackTile);
+      const endHeight = restingHeight(types[attacker]);
       flight = {
         start,
-        end: new THREE.Vector3(end.x, 0.04, end.z),
+        end: new THREE.Vector3(end.x, endHeight, end.z),
         started: performance.now(),
         duration: 620 + shotTilt * 180,
         attacker,
@@ -393,13 +486,17 @@ export default function Home() {
       const half = targetData.size / 2;
       const edge = THREE.MathUtils.clamp(Math.max(Math.abs(local.x), Math.abs(local.z)) / half, 0, 1.35);
       const miss = Math.abs(local.x) > half * 1.38 || Math.abs(local.z) > half * 1.38;
-      const onTop = Math.abs(local.x) < half * 0.58 && Math.abs(local.z) < half * 0.58;
-      const lowStyle = f.tilt < 0.38 ? 1.12 - targetData.mass * 0.13 : 0;
-      const edgeStyle = f.tilt > 0.62 ? 0.88 + edge * 0.34 : 0;
-      const mixedStyle = f.tilt >= 0.38 && f.tilt <= 0.62 ? 0.82 : 0;
-      const technique = Math.max(lowStyle, edgeStyle, mixedStyle) * (0.64 + edge * 0.48) * (onTop ? 0.68 : 1);
-      const random = 0.91 + Math.random() * 0.16;
-      const flipScore = miss ? 0 : attackData.hit * f.power * technique * random / (0.7 + targetData.mass * 0.3);
+      const angleMix = THREE.MathUtils.smoothstep(f.tilt, 0.18, 0.82);
+      const middle = THREE.MathUtils.clamp(1 - Math.abs(f.tilt - 0.5) * 2, 0, 1);
+      const stylePower = THREE.MathUtils.lerp(attackData.flatPower, attackData.standPower, angleMix) + attackData.middleBoost * middle;
+      const flatContact = 0.7 + edge * 0.34;
+      const standContact = 0.48 + edge * 0.55;
+      const contact = THREE.MathUtils.lerp(flatContact, standContact, angleMix);
+      const vulnerability = THREE.MathUtils.lerp(targetData.flatVulnerability, targetData.standVulnerability, angleMix);
+      const resistance = 0.84 + targetData.mass * 0.18;
+      const faceLift = targetFace === "back" ? 1.08 : 1;
+      const random = 0.92 + Math.random() * 0.16;
+      const flipScore = miss ? 0 : attackData.hit * f.power * stylePower * contact * vulnerability * faceLift * random / resistance;
       const flipped = flipScore >= FLIP_THRESHOLD;
       const axis: "x" | "z" = Math.abs(local.x) > Math.abs(local.z) ? "z" : "x";
       const dir = new THREE.Vector3(f.end.x - f.start.x, 0, f.end.z - f.start.z).normalize();
@@ -407,6 +504,7 @@ export default function Home() {
         started: performance.now(), duration: flipped ? 920 : 680, flipped, axis,
         push: dir.multiplyScalar(0.55 + f.power * 0.8),
         baseY: targetTile.position.y, baseRx: targetTile.rotation.x, baseRz: targetTile.rotation.z,
+        landingFace: landingFace(types[f.attacker], f.tilt),
       };
       phase = "reaction";
       cameraKick = 1;
@@ -443,12 +541,13 @@ export default function Home() {
         targetTile = attackTile;
         attackTile = null;
         targetType = types[attacker];
+        targetFace = reaction.landingFace;
         if (targetTile) {
-          targetTile.position.set(landing.x, 0.015, landing.z);
-          targetTile.rotation.set(0, (Math.random() - 0.5) * 0.6, 0);
+          targetTile.position.set(landing.x, restingHeight(targetType), landing.z);
+          setRestingFace(targetTile, targetType, targetFace, (Math.random() - 0.5) * 0.6);
         }
         turn = defender;
-        message = "실패. 던진 딱지가 바닥에 남고 공격권이 넘어갑니다.";
+        message = `실패. 던진 딱지가 ${targetFace === "back" ? "뒷면" : "앞면"}으로 떨어져 공격권이 넘어갑니다.`;
       }
       reaction = null;
       power = 0;
@@ -465,15 +564,16 @@ export default function Home() {
         window.setTimeout(() => {
           if (token !== roundToken || phase !== "ai" || !targetTile) return;
           const t = TILE[targetType];
+          const attackData = TILE[types[1]];
           const profile = AI_PROFILE[difficulty];
-          const error = profile.error;
+          const error = profile.error / attackData.accuracy;
           const side = Math.floor(Math.random() * 4);
           const r = t.size * (profile.edgeMin + Math.random() * profile.edgeSpan);
           const p = targetTile.position.clone();
           if (side === 0) p.x += r; else if (side === 1) p.x -= r; else if (side === 2) p.z += r; else p.z -= r;
           p.x += (Math.random() - 0.5) * error;
           p.z += (Math.random() - 0.5) * error;
-          let aiTilt = targetType === "cal" ? 0.82 : targetType === "news" ? 0.25 : 0.58;
+          let aiTilt = attackData.preferredTilt;
           if (Math.random() < profile.angleMistake) aiTilt = Math.random();
           const aiPower = profile.powerMin + Math.random() * (profile.powerMax - profile.powerMin);
           tilt = THREE.MathUtils.clamp(aiTilt + (Math.random() - 0.5) * error * 0.35, 0, 1);
@@ -482,6 +582,7 @@ export default function Home() {
         }, delay);
       } else {
         phase = "aim";
+        tilt = TILE[types[turn]].preferredTilt;
         message = `${turn === 0 ? "플레이어 1" : "플레이어 2"} 차례 · 상대 딱지 주변을 누르세요.`;
         syncUi(true);
       }
@@ -497,7 +598,7 @@ export default function Home() {
         turn = 0;
         result = "";
         power = 0;
-        tilt = 0.46;
+        tilt = TILE[types[0]].preferredTilt;
         charge = null;
         flight = null;
         reaction = null;
@@ -537,7 +638,7 @@ export default function Home() {
         const t = THREE.MathUtils.clamp((now - flight.started) / flight.duration, 0, 1);
         const e = 1 - Math.pow(1 - t, 3);
         attackTile.position.lerpVectors(flight.start, flight.end, e);
-        attackTile.position.y = THREE.MathUtils.lerp(flight.start.y, 0.04, e) + Math.sin(Math.PI * t) * (2.2 + flight.tilt * 1.25);
+        attackTile.position.y = THREE.MathUtils.lerp(flight.start.y, flight.end.y, e) + Math.sin(Math.PI * t) * (2.2 + flight.tilt * 1.25);
         attackTile.rotation.x = flight.tilt * Math.PI * 0.44 + t * Math.PI * (1.4 + flight.power);
         attackTile.rotation.z = t * Math.PI * 3.4 * (flight.attacker === 0 ? 1 : -1);
         if (t >= 1) resolveImpact();
@@ -590,6 +691,7 @@ export default function Home() {
 
   const startGame = () => apiRef.current?.start({ mode, difficulty, tile, opponentTile, count });
   const tiltLabel = ui.tilt < 0.33 ? "눕혀치기" : ui.tilt > 0.66 ? "세워치기" : "비스듬히";
+  const activeTileData = TILE[ui.activeType];
 
   return (
     <main className="page-shell">
@@ -660,12 +762,17 @@ export default function Home() {
             </div>
           </div>
 
+          <div className={`technique-card ${ui.targetFace}`}>
+            <div><small>현재 딱지 추천</small><strong>{activeTileData.name} · {activeTileData.styleName}</strong></div>
+            <span>바닥 딱지 <b>{ui.targetFace === "back" ? "뒷면" : "앞면"}</b>{ui.targetFace === "back" && <em>뒤집기 +8%</em>}</span>
+          </div>
+
           <div className="status-box"><span>현재 상태</span><p>{ui.message}</p></div>
           <div className="button-row"><button className="primary" onClick={startGame}>{ui.phase === "menu" ? "게임 시작" : "처음부터"}</button><button className="secondary" onClick={() => apiRef.current?.cancel()} disabled={ui.phase !== "charge"}>조준 취소</button></div>
 
           <div className="test-notes">
             <strong>게임 특징</strong>
-            <ul><li>실제 두께가 다른 3종 딱지</li><li>포물선 비행과 회전</li><li>타점·힘·각도 기반 뒤집힘 판정</li><li>입체 그림자·카메라 충격·AI 공격</li></ul>
+            <ul><li>실제 두께가 다른 3종 딱지</li><li>딱지별로 다른 최적 타법</li><li>확률에 따라 달라지는 앞·뒷면</li><li>타점·힘·각도 기반 뒤집힘 판정</li></ul>
           </div>
         </aside>
       </section>

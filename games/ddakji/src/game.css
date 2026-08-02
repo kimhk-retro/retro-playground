@@ -470,6 +470,7 @@ select:focus-visible {
 
 .meter-block,
 .angle-control,
+.technique-card,
 .status-box,
 .test-notes {
   border: 1px solid rgba(255, 235, 205, 0.1);
@@ -587,6 +588,58 @@ select:focus-visible {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
   transform: translate(-50%, 50%) rotate(-15deg);
   transition: bottom 90ms linear;
+}
+
+.technique-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-color: rgba(255, 208, 97, 0.2);
+  background: linear-gradient(135deg, rgba(255, 208, 97, 0.1), rgba(255, 255, 255, 0.025));
+}
+
+.technique-card > div {
+  display: grid;
+  gap: 3px;
+}
+
+.technique-card small {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.technique-card strong {
+  color: #fff1d0;
+  font-size: 12px;
+}
+
+.technique-card > span {
+  display: grid;
+  min-width: 72px;
+  color: var(--muted);
+  font-size: 9px;
+  text-align: right;
+}
+
+.technique-card > span b {
+  color: var(--gold);
+  font-size: 15px;
+}
+
+.technique-card > span em {
+  color: var(--mint);
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.technique-card.back {
+  border-color: rgba(169, 224, 176, 0.26);
+  background: linear-gradient(135deg, rgba(169, 224, 176, 0.11), rgba(255, 255, 255, 0.025));
 }
 
 .status-box {
