@@ -14,6 +14,20 @@ const TILE = {
   cal: { name: "달력 딱지", size: 1.78, thickness: 0.31, hit: 1.1, mass: 1.38, accuracy: 0.82 },
 } as const;
 
+const FLIP_THRESHOLD = 0.95;
+const AI_PROFILE: Record<Difficulty, {
+  error: number;
+  powerMin: number;
+  powerMax: number;
+  angleMistake: number;
+  edgeMin: number;
+  edgeSpan: number;
+}> = {
+  easy: { error: 0.75, powerMin: 0.56, powerMax: 0.82, angleMistake: 0.28, edgeMin: 0.28, edgeSpan: 0.44 },
+  normal: { error: 0.42, powerMin: 0.7, powerMax: 0.91, angleMistake: 0.12, edgeMin: 0.42, edgeSpan: 0.3 },
+  hard: { error: 0.22, powerMin: 0.78, powerMax: 0.96, angleMistake: 0.05, edgeMin: 0.52, edgeSpan: 0.16 },
+};
+
 type UiState = {
   phase: Phase;
   turn: number;
@@ -386,7 +400,7 @@ export default function Home() {
       const technique = Math.max(lowStyle, edgeStyle, mixedStyle) * (0.64 + edge * 0.48) * (onTop ? 0.68 : 1);
       const random = 0.91 + Math.random() * 0.16;
       const flipScore = miss ? 0 : attackData.hit * f.power * technique * random / (0.7 + targetData.mass * 0.3);
-      const flipped = flipScore >= 0.82;
+      const flipped = flipScore >= FLIP_THRESHOLD;
       const axis: "x" | "z" = Math.abs(local.x) > Math.abs(local.z) ? "z" : "x";
       const dir = new THREE.Vector3(f.end.x - f.start.x, 0, f.end.z - f.start.z).normalize();
       reaction = {
@@ -451,15 +465,17 @@ export default function Home() {
         window.setTimeout(() => {
           if (token !== roundToken || phase !== "ai" || !targetTile) return;
           const t = TILE[targetType];
-          const error = difficulty === "easy" ? 0.5 : difficulty === "normal" ? 0.28 : 0.12;
+          const profile = AI_PROFILE[difficulty];
+          const error = profile.error;
           const side = Math.floor(Math.random() * 4);
-          const r = t.size * (0.55 + Math.random() * 0.12);
+          const r = t.size * (profile.edgeMin + Math.random() * profile.edgeSpan);
           const p = targetTile.position.clone();
           if (side === 0) p.x += r; else if (side === 1) p.x -= r; else if (side === 2) p.z += r; else p.z -= r;
           p.x += (Math.random() - 0.5) * error;
           p.z += (Math.random() - 0.5) * error;
-          const aiTilt = targetType === "cal" ? 0.82 : targetType === "news" ? 0.25 : 0.58;
-          const aiPower = difficulty === "easy" ? 0.72 + Math.random() * 0.2 : 0.88 + Math.random() * 0.11;
+          let aiTilt = targetType === "cal" ? 0.82 : targetType === "news" ? 0.25 : 0.58;
+          if (Math.random() < profile.angleMistake) aiTilt = Math.random();
+          const aiPower = profile.powerMin + Math.random() * (profile.powerMax - profile.powerMin);
           tilt = THREE.MathUtils.clamp(aiTilt + (Math.random() - 0.5) * error * 0.35, 0, 1);
           power = aiPower;
           throwTile(1, p, aiPower, tilt);
@@ -627,8 +643,8 @@ export default function Home() {
           <div className="settings-grid">
             <label>게임 모드<select value={mode} onChange={(e) => setMode(e.target.value as Mode)}><option value="ai">AI 대전</option><option value="2p">로컬 2인</option></select></label>
             <label>AI 실력<select value={difficulty} onChange={(e) => setDifficulty(e.target.value as Difficulty)} disabled={mode === "2p"}><option value="easy">쉬움</option><option value="normal">보통</option><option value="hard">어려움</option></select></label>
-            <label>내 딱지<select value={tile} onChange={(e) => setTile(e.target.value as TileKey)}><option value="news">신문지</option><option value="note">공책</option><option value="cal">달력</option></select></label>
-            <label>상대 딱지<select value={opponentTile} onChange={(e) => setOpponentTile(e.target.value as TileKey)}><option value="news">신문지</option><option value="note">공책</option><option value="cal">달력</option></select></label>
+            <label>1P 딱지<select value={tile} onChange={(e) => setTile(e.target.value as TileKey)}><option value="news">신문지</option><option value="note">공책</option><option value="cal">달력</option></select></label>
+            <label>{mode === "ai" ? "AI 딱지" : "2P 딱지"}<select value={opponentTile} onChange={(e) => setOpponentTile(e.target.value as TileKey)}><option value="news">신문지</option><option value="note">공책</option><option value="cal">달력</option></select></label>
             <label className="wide-setting">시작 장수<select value={count} onChange={(e) => setCount(Number(e.target.value))}><option value={3}>3장</option><option value={5}>5장</option><option value={7}>7장</option></select></label>
           </div>
 
