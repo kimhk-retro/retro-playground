@@ -21,6 +21,14 @@
       margin:0;font-size:clamp(24px,5.8vw,38px);line-height:1.2;letter-spacing:2px;
     }
     .game-page-title p{margin:6px 0 0;font-size:14px;opacity:.72;}
+    /* 애드센스 안전 배치: 게임 조작 영역과 분리된 설명 글 하단 광고 */
+    .adslot{width:min(calc(100% - 24px),728px);margin:0 auto;text-align:center;overflow:hidden;}
+    .adslot:empty{display:none;}
+    .adslot:not(:empty){margin:48px auto 24px;min-height:90px;}
+    .adslot .adsbygoogle{display:block;}
+    @media(max-width:720px){
+      .adslot:not(:empty){margin:32px auto 18px;padding:0 8px;min-height:50px;}
+    }
   </style>
 
   <!-- Google tag (GA4) -->
@@ -56,13 +64,11 @@
     <p>타점과 힘을 조절해 상대 딱지를 뒤집으세요</p>
   </section>
 
-  <div class="adslot" aria-hidden="true"></div>
 
   <div id="ddakji-game-root">
     <p class="loading-copy">딱지치기 경기장을 준비하고 있습니다…</p>
   </div>
 
-  <div class="adslot" aria-hidden="true"></div>
 
   <article class="legacy-content" id="game-guide">
     <span class="article-kicker">RETRO PLAYGROUND GAME GUIDE</span>
@@ -87,6 +93,9 @@
     <h2>게임 모드</h2>
     <p>AI 대전은 쉬움·보통·어려움 중에서 실력을 고를 수 있습니다. 로컬 2인 모드에서는 한 화면에서 번갈아 딱지를 내려치며 승부할 수 있습니다. PC에서는 마우스, 모바일과 태블릿에서는 손가락으로 같은 방식으로 조작합니다.</p>
   </article>
+
+  <!-- 애드센스 승인 후 이 설명 글 하단 영역에 광고 코드를 넣으세요. -->
+  <div class="adslot content-ad" data-ad-placement="after-game-guide"></div>
 
   <footer class="site-footer">
     <div>

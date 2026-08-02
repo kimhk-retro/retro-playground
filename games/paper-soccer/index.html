@@ -38,12 +38,13 @@
   }
   header.site p{margin:5px 0 0;font-size:13px;opacity:.72;}
 
-  .adslot{margin:10px auto;text-align:center;}
-  .adslot .ph{
-    border:1px dashed rgba(255,255,255,.18);border-radius:8px;
-    padding:12px;font-size:12px;color:rgba(255,255,255,.32);
-    background:rgba(255,255,255,.02);
+  /* 애드센스 안전 배치: 게임 조작 영역과 분리된 설명 글 하단 광고 */
+  .adslot{
+    width:min(100%,728px);margin:0 auto;text-align:center;overflow:hidden;
   }
+  .adslot:empty{display:none;}
+  .adslot:not(:empty){margin:48px auto 24px;min-height:90px;}
+  .adslot .adsbygoogle{display:block;}
 
   #stage{position:relative;width:100%;display:flex;justify-content:center;}
   #board{
@@ -290,6 +291,11 @@
   article p{margin:8px 0;}
   footer.site{text-align:center;font-size:12px;opacity:.4;margin-top:24px;line-height:1.8;}
 
+
+  @media(max-width:720px){
+    .adslot:not(:empty){margin:32px auto 18px;padding:0 8px;min-height:50px;}
+  }
+
   @media(max-width:480px){
     .wrap{padding:6px 8px 30px;}
     .hud{font-size:13px;}
@@ -344,8 +350,6 @@
     <p>공의 타점을 찍고 힘을 조절해 골을 넣으세요</p>
   </header>
 
-  <!-- 애드센스 승인 후 상단 광고 코드를 이 영역에 추가하세요. -->
-  <div class="adslot" aria-hidden="true"></div>
 
   <div id="stage">
     <canvas id="board"></canvas>
@@ -447,8 +451,6 @@
     <button class="btn ghost" id="resetBtn">메뉴</button>
   </div>
 
-  <!-- 애드센스 승인 후 하단 광고 코드를 이 영역에 추가하세요. -->
-  <div class="adslot" aria-hidden="true"></div>
 
   <article>
     <h2>추억의 '축구 게임판'이란?</h2>
@@ -482,6 +484,9 @@
     <h2>이런 분께 추천합니다</h2>
     <p>어릴 적 문방구 게임을 그리워하는 분, 친구와 한 대의 휴대폰으로 승부를 내고 싶은 분, 설치 없이 브라우저에서 바로 즐길 수 있는 무료 게임을 찾는 분께 추천합니다. 회원가입도 설치도 필요 없습니다.</p>
   </article>
+
+  <!-- 애드센스 승인 후 이 설명 글 하단 영역에 광고 코드를 넣으세요. -->
+  <div class="adslot content-ad" data-ad-placement="after-game-guide"></div>
 
   <footer class="site">
     <a href="/" style="color:inherit;font-weight:800;">Retro-Playground 홈으로</a>
