@@ -322,6 +322,14 @@
 
 </style>
   <link rel="canonical" href="https://retro-playground.com/games/paper-soccer/">
+  <!-- Google tag (GA4) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZEK2D0W02Q"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-ZEK2D0W02Q');
+  </script>
 </head>
 <body>
 <div class="wrap">
@@ -784,6 +792,10 @@ function showGoalAd(done, scorer){
   goalAdShown++;
   window.__sponsorStats.goalAdViews++;
   fireAd('goalad_view',{n:goalAdShown,placement:'sideline_celebration'});
+  trackGameEvent('celebration_view',{
+    scoring_team:scorer===0 ? 'blue' : 'red',
+    celebration_number:goalAdShown
+  });
 
   const team=teamName(scorer);
   document.getElementById('goalBig').textContent='⚽ GOAL !';
@@ -1082,6 +1094,14 @@ function toast(msg){
 function teamName(t){ return t===0?'파란팀':'빨간팀'; }
 function isHumanTurn(){ return S.mode==='2p' || S.turn===0; }
 
+
+function trackGameEvent(name, params){
+  if(typeof window.gtag !== 'function') return;
+  window.gtag('event', name, Object.assign({
+    game_name:'paper_soccer'
+  }, params||{}));
+}
+
 function formatTime(sec){
   const total=Math.max(0,Math.ceil(sec));
   const m=Math.floor(total/60), s=total%60;
@@ -1117,6 +1137,11 @@ function newMatch(){
   S.screen='play'; S.phase='aim'; S.charge=null; S.preview=null; S.ownerMark=null;
   document.getElementById('startOverlay').classList.add('hidden');
   document.getElementById('endOverlay').classList.add('hidden');
+  trackGameEvent('game_start',{
+    game_mode:S.mode,
+    difficulty:S.mode==='ai' ? S.diff : 'two_player',
+    match_minutes:S.matchMinutes
+  });
   updateHUD(); maybeAI();
 }
 function resetKickoff(attacker){
@@ -1155,6 +1180,13 @@ function handleEvent(e){
 
   if(e.type==='goal'){
     S.score[attacker]++;
+    trackGameEvent('goal',{
+      scoring_team:attacker===0 ? 'blue' : 'red',
+      blue_score:S.score[0],
+      red_score:S.score[1],
+      game_mode:S.mode,
+      match_minutes:S.matchMinutes
+    });
     sfx.goal(); buzz([60,50,120]);
     S.phase='wait'; updateHUD();
     const proceed = ()=>{
@@ -1218,6 +1250,15 @@ function endMatch(reason){
   document.getElementById('endScore').textContent=
     prefix+'파란팀 '+S.score[0]+'  :  '+S.score[1]+' 빨간팀';
   document.getElementById('endOverlay').classList.remove('hidden');
+  trackGameEvent('game_end',{
+    end_reason:reason||'unknown',
+    result:tied ? 'draw' : (S.mode==='ai' ? (w===0 ? 'win' : 'loss') : (w===0 ? 'blue_win' : 'red_win')),
+    blue_score:S.score[0],
+    red_score:S.score[1],
+    game_mode:S.mode,
+    difficulty:S.mode==='ai' ? S.diff : 'two_player',
+    match_minutes:S.matchMinutes
+  });
   if(!tied && (w===0||S.mode==='2p')) sfx.win();
   updateHUD();
 }
