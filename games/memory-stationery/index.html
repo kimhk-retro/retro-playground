@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>추억의 문방구 - 복고풍 연결 퍼즐 게임 | Retro-Playground</title>
+  <meta name="description" content="1988년 골목 문방구에서 같은 상품 두 개를 연결해 손님의 주문을 완성하는 복고풍 퍼즐 웹게임입니다. PC와 모바일에서 무료로 즐겨보세요." />
+  <meta name="keywords" content="추억의 문방구, 문방구 게임, 연결 퍼즐, 같은 그림 맞추기, 추억의 게임, 복고 게임, 무료 웹게임" />
+  <meta name="theme-color" content="#2b160b" />
+  <meta property="og:title" content="추억의 문방구 - 복고풍 연결 퍼즐 게임" />
+  <meta property="og:description" content="딱지, 구슬, 팽이와 공기돌을 연결해 손님의 주문을 완성해 보세요." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://retro-playground.com/games/memory-stationery/" />
+  <link rel="canonical" href="https://retro-playground.com/games/memory-stationery/" />
+  <style>
+    @font-face {
+      font-family:'NeoDunggeunmo';
+      src:url('assets/fonts/NeoDunggeunmo.woff2') format('woff2');
+      font-style:normal;
+      font-weight:400;
+      font-display:swap;
+    }
+    :root {
+      --bg: #123c3b; --panel: #e8c88b; --paper: #fff3cb; --paper-deep: #d4a85e;
+      --ink: #2c2118; --frame: #5b321c; --frame-dark: #2b1a12; --accent: #b94735;
+      --accent-2: #2e7654; --tile: #fff8df; --tile-border: #8b5d31; --shadow: rgba(24,13,7,.42);
+      --order: #fff0c6; --street-1: #255747; --street-2: #1c493f;
+    }
+    * { box-sizing: border-box; }
+    html { background: var(--bg); }
+    body { margin:0; min-height:100vh; color:var(--ink); font-family:"Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif; background:
+      radial-gradient(circle at 8% 8%,rgba(255,255,255,.08),transparent 24%),
+      repeating-linear-gradient(90deg,rgba(255,255,255,.025) 0 2px,transparent 2px 9px),
+      linear-gradient(135deg,var(--street-1),var(--street-2)); }
+    body:before { content:""; position:fixed; inset:0; pointer-events:none; opacity:.22; background:repeating-linear-gradient(0deg,transparent 0 8px,rgba(0,0,0,.18) 8px 10px); mix-blend-mode:multiply; }
+    button { font:inherit; }
+    .hidden { display:none !important; }
+    .page { width:min(1920px,100%); margin:0 auto; padding:20px; display:grid; grid-template-columns:minmax(225px,280px) minmax(520px,1fr) minmax(265px,330px); gap:14px; align-items:start; position:relative; z-index:1; }
+    .left-rail,.right-rail,.game-shell { min-width:0; }
+    .left-rail,.right-rail { display:grid; gap:12px; }
+    .panel,.signboard,.hud,.board-frame,.controls,.rules-tip,.event-panel { border:4px solid var(--frame); box-shadow:0 7px 0 rgba(24,13,7,.34), inset 0 0 0 2px rgba(255,225,155,.26); }
+    .panel,.event-panel { background:linear-gradient(#fff5d2,#e8c68a); }
+    .signboard { padding:18px 14px 14px; text-align:center; background:linear-gradient(145deg,#fff3c5,#dfb56f); position:relative; overflow:hidden; }
+    .signboard:before { content:""; position:absolute; inset:7px; border:2px dashed rgba(91,50,28,.45); pointer-events:none; }
+    .signboard h1 { position:relative; margin:0; color:#2b652f; text-shadow:3px 3px 0 #efc93c,-2px -2px 0 #b73a2d; font-size:clamp(29px,3vw,48px); letter-spacing:-.08em; line-height:1.1; }
+    .signboard p { position:relative; margin:10px 0 0; padding:5px 8px; background:#193f3b; color:#ffe5a1; font-size:13px; font-weight:800; }
+    .hud { display:grid; grid-template-columns:repeat(4,1fr); gap:0; padding:14px 18px; background:linear-gradient(#f6ddb0,#d9ad68); }
+    .stat { min-width:0; padding:3px 10px; text-align:center; border-right:2px solid rgba(139,93,49,.45); }
+    .stat:last-child { border-right:0; }
+    .stat small { display:block; font-size:12px; font-weight:800; opacity:.72; }
+    .stat strong { display:block; margin-top:2px; font-family:Impact,"Arial Black",sans-serif; font-size:clamp(22px,3vw,36px); letter-spacing:.03em; }
+    #timeStat.danger { color:#b32121; animation:pulse .55s infinite alternate; }
+    @keyframes pulse { from{transform:scale(1)} to{transform:scale(1.05)} }
+    .game-shell { display:grid; gap:12px; background-color:#163a39; background-repeat:no-repeat; background-size:cover; background-position:center; background-blend-mode:soft-light; }
+    .board-frame { padding:14px; background:linear-gradient(145deg,#704323,#3a2518); }
+    .board-wrap { position:relative; padding:15px; background:linear-gradient(135deg,#0c3434,#142e2d); border:4px solid #2b1b12; box-shadow:inset 0 0 0 3px #8c5d2c, inset 0 0 22px #061b1a; }
+    #board { position:relative; display:grid; grid-template-columns:repeat(8,minmax(0,1fr)); gap:6px; user-select:none; touch-action:manipulation; }
+    .tile { aspect-ratio:1/1; min-width:0; border:3px solid var(--tile-border); border-radius:8px; background:linear-gradient(145deg,#fffbe9,#e8bd73); box-shadow:0 4px 0 #704526, inset 0 0 0 2px rgba(255,255,255,.5); color:var(--ink); display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; transition:transform .12s ease,background .12s ease,opacity .18s ease; padding:2px; }
+    .tile:hover { transform:translateY(-3px); }
+    .tile.selected { background:#ffe28a; outline:4px solid #f4b51e; box-shadow:0 0 15px #ffd34e,0 4px 0 #704526; transform:translateY(-3px); }
+    .tile.hint { animation:hintBlink .55s ease-in-out 4 alternate; }
+    @keyframes hintBlink { to{background:#bce7c7;outline:4px solid #ffe15b;transform:scale(1.06)} }
+    .tile.removing { opacity:0; transform:scale(.55); pointer-events:none; }
+    .tile.empty { visibility:hidden; pointer-events:none; }
+    .tile .emoji { font-size:clamp(22px,4.5vw,48px); line-height:1; filter:drop-shadow(1px 2px 0 rgba(73,37,15,.22)); }
+    .tile .tile-art { width:76%; height:76%; object-fit:contain; image-rendering:pixelated; pointer-events:none; filter:drop-shadow(1px 2px 0 rgba(73,37,15,.22)); }
+    .tile .label { font-size:clamp(8px,1.25vw,12px); margin-top:4px; white-space:nowrap; font-weight:900; }
+    #pathCanvas { position:absolute; inset:auto; pointer-events:none; z-index:5; }
+    .customer-panel { padding:12px; display:grid; grid-template-columns:54px 1fr; gap:9px; align-items:center; background:linear-gradient(#fff1c8,#e7bd77); }
+    .customer-face { min-height:72px; display:grid; place-items:center; overflow:hidden; font-size:52px; line-height:1; background:#9b6a43; border:3px solid var(--frame); }
+    .customer-face img { width:100%; height:100%; object-fit:contain; image-rendering:pixelated; }
+    .customer-copy strong { display:block; font-size:18px; }
+    .customer-copy small { display:block; margin-top:4px; line-height:1.4; opacity:.78; }
+    .order-items { grid-column:1 / -1; display:grid; grid-template-columns:repeat(2,1fr); gap:7px; }
+    .order-chip { min-width:0; padding:7px 5px; border:2px solid var(--tile-border); background:#fffdf7; text-align:center; font-size:12px; font-weight:900; }
+    .order-chip .order-emoji { display:block; font-size:28px; line-height:1; }
+    .order-chip .order-art { display:block; width:42px; height:42px; margin:0 auto 2px; object-fit:contain; image-rendering:pixelated; }
+    .order-chip.done { opacity:.42; text-decoration:line-through; background:#dcebdc; }
+    .progress-row { padding:8px 12px; display:flex; justify-content:space-between; gap:8px; font-size:13px; font-weight:900; background:#ead09b; border-top:2px solid var(--tile-border); border-bottom:2px solid var(--tile-border); }
+    .event-panel { padding:13px; display:flex; gap:12px; align-items:center; }
+    .event-icon { font-size:38px; line-height:1; }
+    .event-copy strong,.event-copy small { display:block; }
+    .event-copy strong { font-size:17px; }
+    .event-copy small { margin-top:3px; line-height:1.4; opacity:.76; }
+    .right-rail .event-panel { min-height:128px; }
+    .rail-title { margin:0; padding:8px 12px; text-align:center; border-bottom:3px solid var(--frame); background:#f7dfaa; font-size:19px; }
+    .info-panel { overflow:hidden; }
+    .shop-summary { display:grid; gap:7px; padding:11px; }
+    .shop-badge { display:grid; grid-template-columns:36px 1fr; align-items:center; padding:8px; border:2px solid var(--tile-border); background:#fffdf7; font-size:12px; font-weight:900; }
+    .shop-badge span { grid-row:span 2; font-size:28px; text-align:center; }
+    .wallet-card { margin:0 11px 11px; padding:10px; text-align:center; background:#193f3b; color:#ffe8a8; border:3px solid var(--frame); font-weight:900; }
+    .controls { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; padding:12px; background:linear-gradient(#714522,#3e2718); }
+    .btn { border:3px solid var(--frame); border-radius:7px; padding:11px 8px; background:linear-gradient(#fff3c8,#dcae62); color:var(--ink); font-weight:900; cursor:pointer; box-shadow:0 4px 0 #23140d; transition:transform .12s ease,filter .12s ease; }
+    .btn:hover:not(:disabled) { transform:translateY(-2px); filter:brightness(1.06); }
+    .btn.primary { background:linear-gradient(#4b9b67,#21603f); color:#fff8d7; }
+    .btn:disabled { opacity:.45; cursor:default; }
+    .message { min-height:34px; padding:0 12px 3px; text-align:center; font-weight:900; color:#ffe6a2; text-shadow:1px 1px 0 #22150e; }
+    .rules-tip { padding:9px 12px; text-align:center; background:#7c4922; color:#ffe8a8; font-size:13px; font-weight:800; }
+    .rules-tip:before { content:'💡 '; }
+    .rail-actions { display:grid; gap:8px; padding:11px; }
+    .rail-actions .btn { width:100%; text-align:left; }
+    .mobile-ad { display:none; }
+    .overlay { position:fixed; inset:0; z-index:20; display:grid; place-items:center; padding:20px; background:rgba(19,13,8,.75); }
+    .overlay.hidden { display:none; }
+    .modal { width:min(480px,100%); max-height:calc(100vh - 40px); overflow:auto; background:linear-gradient(#fff4d0,#e7c27e); border:5px solid var(--frame); padding:24px; text-align:center; box-shadow:0 16px 35px #0008; }
+    .modal h2 { margin:0 0 10px; font-size:30px; }
+    .modal p { line-height:1.6; }
+    .modal-actions { display:grid; gap:9px; margin-top:18px; }
+    .upgrade-list { display:grid; gap:10px; margin:16px 0; text-align:left; }
+    .upgrade-card,.era-card { display:grid; grid-template-columns:44px 1fr auto; gap:10px; align-items:center; padding:10px; border:2px solid var(--tile-border); background:#fffaf0; }
+    .upgrade-icon { font-size:30px; text-align:center; }
+    .upgrade-card strong,.upgrade-card small,.era-card strong,.era-card small { display:block; }
+    .upgrade-card small,.era-card small { margin-top:3px; line-height:1.35; opacity:.72; }
+    .upgrade-card button { min-width:92px; padding:8px 6px; }
+    .era-grid { display:grid; gap:10px; margin:16px 0; text-align:left; }
+    .era-card.active { outline:3px solid var(--accent-2); background:#edf7ef; }
+    .era-card.locked { opacity:.58; filter:grayscale(.45); }
+    .era-year { font-size:18px; font-weight:900; text-align:center; }
+    .era-progress { height:12px; overflow:hidden; border:2px solid var(--tile-border); background:#fff; margin-top:10px; }
+    .era-progress > span { display:block; height:100%; background:var(--accent-2); width:0; transition:width .25s ease; }
+    .era-note { font-size:12px; opacity:.75; margin-top:6px; }
+    .collection-tabs { display:flex; gap:8px; margin:12px 0; }
+    .collection-tabs .btn.active { background:var(--accent-2); color:#fff; }
+    .collection-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; max-height:310px; overflow:auto; padding:3px; }
+    .collect-card { border:2px solid var(--tile-border); background:#fffdf7; padding:9px 5px; text-align:center; }
+    .collect-card.locked { filter:grayscale(1); opacity:.38; }
+    .collect-card .icon { font-size:27px; display:block; }
+    .collect-card small { display:block; margin-top:4px; font-weight:800; }
+    .achievement-list { display:grid; gap:8px; max-height:320px; overflow:auto; padding:3px; }
+    .achievement-card { display:grid; grid-template-columns:42px 1fr auto; align-items:center; gap:9px; border:2px solid var(--tile-border); background:#fffdf7; padding:10px; }
+    .achievement-card.done { background:#edf7ef; border-color:var(--accent-2); }
+    .achievement-card .icon { font-size:28px; }
+    .achievement-card strong,.achievement-card small { display:block; }
+    .achievement-card small { opacity:.72; margin-top:3px; }
+    .summary-box { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; margin:10px 0; }
+    .summary-box div { background:#fff6dc; border:2px solid var(--tile-border); padding:8px 4px; text-align:center; }
+    .summary-box strong,.summary-box small { display:block; }
+    @media (max-width:1100px) { .page { grid-template-columns:220px minmax(0,1fr); max-width:900px; } .right-rail { grid-column:1 / -1; grid-template-columns:1fr 1fr; align-items:start; } .right-rail .event-panel { min-height:0; } }
+    @media (max-width:680px) { .page { display:flex; flex-direction:column; padding:8px; gap:8px; } .game-shell { order:1; width:100%; } .left-rail { order:2; width:100%; } .right-rail { order:3; width:100%; display:grid; grid-template-columns:1fr; } .signboard { display:none; } .hud { grid-template-columns:repeat(2,1fr); padding:8px; } .stat { border-right:0; border-bottom:1px solid rgba(139,93,49,.35); padding:5px; } .stat:nth-child(odd) { border-right:1px solid rgba(139,93,49,.35); } .stat strong { font-size:24px; } .board-frame { padding:7px; } .board-wrap { padding:8px; } #pathCanvas { inset:auto; } #board { gap:4px; } .tile { border-width:2px; border-radius:5px; box-shadow:0 3px 0 #704526; } .tile .emoji { font-size:clamp(20px,8.8vw,36px); } .tile .label { font-size:8px; margin-top:2px; } .controls { grid-template-columns:repeat(2,1fr); padding:8px; gap:7px; } .message { min-height:27px; font-size:12px; } .customer-panel { grid-template-columns:48px 1fr; } .order-items { grid-column:1 / -1; } .customer-face { min-height:58px; font-size:40px; } .modal { padding:17px; } .upgrade-card,.era-card { grid-template-columns:38px 1fr; } .upgrade-card button,.era-card button { grid-column:1 / -1; width:100%; } }
+
+    /* 1536x1024 reference composition */
+    body { background-image:linear-gradient(rgba(7,27,26,.33),rgba(7,27,26,.52)),url("assets/backgrounds/shop-1995.webp"); background-size:cover; background-position:center; background-attachment:fixed; }
+    body:before { opacity:.34; background:repeating-linear-gradient(0deg,transparent 0 5px,rgba(0,0,0,.12) 5px 6px),repeating-linear-gradient(90deg,transparent 0 11px,rgba(255,230,166,.035) 11px 12px); }
+    .page { width:min(1536px,100%); padding:12px; grid-template-columns:360px minmax(600px,1fr) 400px; gap:12px; }
+    .left-rail,.right-rail,.game-shell { gap:10px; }
+    .signboard,.hud,.event-panel { min-height:154px; }
+    .signboard { display:flex; flex-direction:column; justify-content:center; padding:20px 18px 15px; border-width:6px; background:linear-gradient(rgba(255,244,204,.96),rgba(224,181,105,.96)); }
+    .signboard h1 { white-space:nowrap; font-size:44px; letter-spacing:-.075em; line-height:1; color:#2c6b34; text-shadow:3px 3px 0 #f0c835,-2px -2px 0 #9f2c25,5px 5px 0 rgba(54,29,13,.18); }
+    .signboard p { width:100%; margin-top:15px; padding:6px 8px; font-size:14px; border:2px solid #4c2d18; }
+    .hud { grid-template-columns:repeat(3,1fr); align-items:center; padding:17px 14px; border-width:6px; background:linear-gradient(rgba(255,244,209,.97),rgba(225,185,116,.97)); }
+    .stat { padding:8px 10px; }
+    .stat small { font-size:15px; }
+    .stat strong { display:flex; align-items:center; justify-content:center; gap:8px; margin-top:6px; font-size:42px; }
+    .hud-icon { font-family:system-ui,sans-serif; font-size:30px; }
+    .combo-flame { font-family:system-ui,sans-serif; font-size:29px; }
+    .event-panel { padding:16px 20px; border-width:6px; background:linear-gradient(rgba(255,244,207,.97),rgba(224,183,111,.97)); }
+    .event-icon { font-size:54px; }
+    .event-copy strong { font-size:23px; color:#174f85; }
+    .event-copy:before { content:'오늘의 이벤트'; display:block; margin-bottom:7px; color:var(--ink); font-size:15px; font-weight:900; }
+    .event-copy small { font-size:14px; font-weight:800; }
+    .customer-progress { min-height:47px; padding:7px 14px; border:4px solid var(--frame); background:linear-gradient(#ffe8b4,#d9a95f); box-shadow:0 5px 0 rgba(24,13,7,.35),inset 0 0 0 2px rgba(255,255,255,.36); font-size:14px; }
+    .customer-progress b { margin-right:8px; font-size:19px; }
+    .customer-panel { grid-template-columns:120px 1fr; padding:12px; gap:10px; border:5px solid var(--frame); background:linear-gradient(rgba(255,239,196,.97),rgba(214,170,102,.97)); box-shadow:0 6px 0 rgba(24,13,7,.35),inset 0 0 0 2px rgba(255,255,255,.35); }
+    .current-customer { min-height:325px; }
+    .next-customer-panel { min-height:278px; }
+    .customer-face { width:120px; height:132px; min-height:0; align-self:start; background:linear-gradient(#856143,#4a3020); border-width:4px; }
+    .speech-bubble { position:relative; min-height:118px; padding:17px 13px; display:flex; flex-direction:column; justify-content:center; background:#fff7dd; border:3px solid #7b5233; box-shadow:inset 0 0 12px rgba(123,82,51,.13); }
+    .speech-bubble:before { content:''; position:absolute; left:-15px; top:42px; width:23px; height:23px; background:#fff7dd; border-left:3px solid #7b5233; border-bottom:3px solid #7b5233; transform:rotate(45deg); }
+    .customer-copy strong { position:relative; z-index:1; font-size:21px; }
+    .customer-copy small { position:relative; z-index:1; margin-top:8px; font-size:15px; font-weight:800; }
+    .order-title { grid-column:1 / -1; margin:0 -12px; padding:6px 10px; text-align:center; font-size:15px; border-top:3px solid var(--frame); border-bottom:3px solid var(--frame); background:#f4d494; }
+    .order-items { grid-column:1 / -1; grid-template-columns:repeat(2,1fr); gap:9px; }
+    .order-chip { min-height:92px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:7px; border:3px solid #986738; background:linear-gradient(#fffdf1,#e6c17d); box-shadow:0 3px 0 #704526; font-size:14px; }
+    .order-chip .order-art { width:58px; height:58px; }
+    .order-bonus { grid-column:1 / -1; padding:7px 9px; text-align:center; color:#ffeeb5; background:#27352a; border:3px solid var(--frame); font-size:12px; font-weight:900; }
+    .game-shell { background-color:rgba(10,40,39,.85); background-blend-mode:multiply; }
+    .board-frame { padding:10px; border-width:6px; background:linear-gradient(145deg,#79491f,#352016); }
+    .board-frame > .progress-row { min-height:39px; padding:7px 11px; border:3px solid #5d371f; background:#efd29a; }
+    .board-wrap { padding:12px; border-width:4px; background:rgba(5,39,39,.92); box-shadow:inset 0 0 0 4px #8c5d2c,inset 0 0 28px #031817; }
+    #pathCanvas { inset:auto; }
+    #board { gap:4px; }
+    .tile { border-width:3px; border-radius:5px; background:linear-gradient(145deg,#fff7d9,#dfb56d); box-shadow:0 4px 0 #65401f,inset 2px 2px 0 rgba(255,255,255,.64),inset -2px -2px 0 rgba(91,50,28,.18); }
+    .tile .tile-art { width:84%; height:84%; }
+    .tile .label { display:none; }
+    .tile.selected { outline:3px solid #ffd635; box-shadow:0 0 0 3px #ff9e17,0 0 18px rgba(255,214,53,.92),0 4px 0 #65401f; }
+    .controls { min-height:77px; padding:11px; gap:12px; border-width:6px; }
+    .controls .btn { font-size:17px; background:linear-gradient(#fff0bd,#dca75a); }
+    .controls .btn.primary { background:linear-gradient(#f6e7ba,#d6a353); color:var(--ink); }
+    .message { min-height:38px; padding:7px 12px; background:rgba(8,50,48,.92); border-left:5px solid var(--frame); border-right:5px solid var(--frame); }
+    .rules-tip { min-height:43px; display:flex; align-items:center; justify-content:center; border-width:5px; font-size:14px; }
+    .right-rail .panel { border-width:5px; }
+    .rail-title { padding:7px 10px; font-size:20px; border-bottom-width:4px; }
+    .info-panel { min-height:300px; }
+    .shop-overview { display:grid; grid-template-columns:1.15fr .85fr; gap:10px; padding:11px; }
+    .shop-visual { min-height:128px; border:4px solid var(--frame); background:url("assets/backgrounds/shop-1995.webp") center/cover; box-shadow:inset 0 0 18px rgba(0,0,0,.42); }
+    .shop-level { display:flex; flex-direction:column; justify-content:center; gap:8px; padding:9px; background:#fff2c8; border:3px solid #9b6735; }
+    .shop-level strong { font-size:20px; }
+    .shop-level small { font-weight:900; }
+    .shop-exp-track { display:block; height:12px; overflow:hidden; background:#4b3925; border:2px solid #6b411f; }
+    .shop-exp-track span { display:block; width:0; height:100%; background:linear-gradient(90deg,#f8ce35,#ff8c1f); }
+    .shop-metrics { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; padding:0 11px 11px; }
+    .shop-metrics div { padding:8px 5px; text-align:center; background:#fff2cb; border:2px solid #986637; }
+    .shop-metrics small,.shop-metrics strong { display:block; }
+    .shop-metrics small { font-size:11px; font-weight:800; }
+    .shop-metrics strong { margin-top:4px; font-size:15px; }
+    .upgrade-panel { min-height:286px; }
+    .shop-summary { margin:0; padding:9px; gap:7px; }
+    .shop-badge { grid-template-columns:48px 1fr; min-height:66px; padding:7px 9px; border:3px solid #986637; background:linear-gradient(#fff8de,#e8c580); font-size:14px; text-align:left; }
+    .shop-badge span { font-size:35px; }
+    .navigation-panel { min-height:92px; }
+    .rail-actions { grid-template-columns:repeat(3,1fr); gap:6px; padding:8px; }
+    .rail-actions .btn { min-height:69px; padding:7px 4px; text-align:center; font-size:12px; }
+    .rail-actions .btn span { display:block; margin-bottom:3px; font-size:26px; }
+    .wallet-card { display:none; }
+    .collect-card .icon img { width:42px; height:42px; object-fit:contain; image-rendering:pixelated; }
+
+    @media (max-width:1320px) {
+      .page { max-width:1020px; grid-template-columns:300px minmax(0,1fr); }
+      .right-rail { grid-column:1 / -1; grid-template-columns:1fr 1fr 1fr; align-items:start; }
+      .right-rail .event-panel,.right-rail .panel { min-height:100%; }
+      .signboard h1 { font-size:36px; }
+    }
+    @media (max-width:720px) {
+      body { background-attachment:scroll; }
+      .page { display:flex; flex-direction:column; padding:7px; gap:8px; }
+      .game-shell { order:1; width:100%; }
+      .left-rail { order:2; width:100%; }
+      .right-rail { order:3; width:100%; display:grid; grid-template-columns:1fr; }
+      .signboard { display:flex; min-height:112px; }
+      .signboard h1 { font-size:34px; }
+      .hud { min-height:102px; grid-template-columns:repeat(3,1fr); padding:8px 4px; }
+      .stat { border-right:1px solid rgba(139,93,49,.45); border-bottom:0; padding:3px; }
+      .stat:last-child { border-right:0; }
+      .stat small { font-size:10px; }
+      .stat strong { gap:2px; font-size:22px; }
+      .hud-icon,.combo-flame { font-size:15px; }
+      .board-frame { padding:6px; }
+      .board-wrap { padding:6px; }
+      #pathCanvas { inset:auto; }
+      #board { gap:3px; }
+      .tile { border-width:2px; }
+      .tile .tile-art { width:91%; height:91%; }
+      .controls { grid-template-columns:repeat(2,1fr); min-height:0; padding:7px; gap:6px; }
+      .controls .btn { font-size:13px; }
+      .next-customer-panel { display:none; }
+      .current-customer { min-height:0; }
+      .customer-panel { grid-template-columns:92px 1fr; }
+      .customer-face { width:92px; height:104px; }
+      .speech-bubble { min-height:96px; padding:10px; }
+      .shop-overview { grid-template-columns:1fr 1fr; }
+      .shop-metrics { grid-template-columns:repeat(3,1fr); }
+    }
+
+    /* Dark wood retro theme — based on the supplied wooden UI reference. */
+    :root {
+      --ink:#2a170d;
+      --frame:#4b2815;
+      --frame-dark:#211108;
+      --tile-border:#74401f;
+      --paper:#c58b51;
+      --paper-deep:#8a512d;
+      --retro-cream:#f0d5a2;
+      --retro-tan:#bd7f49;
+      --retro-tan-dark:#8a512f;
+      --retro-wood:#693a1e;
+      --retro-wood-dark:#2b160b;
+      --retro-gold:#d99b42;
+      --retro-green:#24483a;
+    }
+    html,body,button { font-family:'NeoDunggeunmo','Malgun Gothic','Apple SD Gothic Neo',sans-serif; font-synthesis:none; }
+    body { letter-spacing:.018em; }
+    strong,b,h1,h2,h3,.btn,.progress-row,.order-chip,.order-bonus,.shop-badge { font-weight:400; }
+    .hud-icon,.combo-flame,.event-icon,.order-emoji,.upgrade-icon,.rail-actions .btn span { font-family:'Segoe UI Emoji','Apple Color Emoji',system-ui,sans-serif; }
+
+    .panel,.signboard,.hud,.board-frame,.controls,.rules-tip,.event-panel,.customer-panel,.customer-progress {
+      border-color:var(--retro-wood-dark);
+      box-shadow:
+        0 6px 0 rgba(23,10,4,.58),
+        inset 0 0 0 2px #b67a43,
+        inset 0 0 0 5px #563019;
+    }
+    .panel,.customer-panel,.modal {
+      background:
+        repeating-linear-gradient(90deg,rgba(51,24,10,.045) 0 1px,transparent 1px 8px),
+        linear-gradient(145deg,#b97d4a,#8b5230);
+    }
+    .signboard {
+      background:
+        repeating-linear-gradient(0deg,rgba(52,25,11,.055) 0 1px,transparent 1px 7px),
+        linear-gradient(145deg,#bd824e,#8a4f2b);
+    }
+    .signboard:before { border-color:rgba(51,25,11,.62); }
+    .signboard h1 {
+      color:#f1d49c;
+      text-shadow:2px 2px 0 #3a1c0e,4px 4px 0 rgba(34,15,7,.34);
+    }
+    .signboard p {
+      background:#2a4639;
+      border-color:#251208;
+      color:#f0d39d;
+      box-shadow:inset 0 0 0 2px rgba(212,159,82,.22);
+    }
+
+    .hud {
+      background:
+        repeating-linear-gradient(90deg,rgba(62,30,13,.045) 0 1px,transparent 1px 10px),
+        linear-gradient(#c28a53,#9a6036);
+      color:#29160c;
+    }
+    .stat { border-color:rgba(68,34,17,.52); }
+    .stat small { opacity:.86; }
+    .stat strong {
+      font-family:'NeoDunggeunmo','Malgun Gothic',sans-serif;
+      letter-spacing:.02em;
+      text-shadow:1px 2px 0 rgba(240,207,148,.36);
+    }
+
+    .event-panel {
+      background:
+        repeating-linear-gradient(0deg,rgba(255,222,164,.035) 0 1px,transparent 1px 7px),
+        linear-gradient(145deg,#764522,#4d2a16);
+      color:#f0d4a3;
+      text-shadow:1px 1px 0 #241006;
+    }
+    .event-panel:after {
+      content:'';
+      position:absolute;
+      inset:9px;
+      border:1px solid rgba(224,168,91,.35);
+      pointer-events:none;
+    }
+    .event-panel { position:relative; }
+    .event-icon { position:relative; z-index:1; filter:sepia(.16) drop-shadow(2px 3px 0 rgba(27,12,5,.46)); }
+    .event-copy { position:relative; z-index:1; }
+    .event-copy:before { color:#e6c48b; }
+    .event-copy strong { color:#ffd078; text-shadow:1px 2px 0 #241006; }
+    .event-copy small { color:#ead0a3; opacity:.92; }
+
+    .customer-progress {
+      color:#f4dab0;
+      background:linear-gradient(#81502c,#5c321b);
+      text-shadow:1px 1px 0 #241006;
+    }
+    .customer-panel { color:#2a170d; }
+    .speech-bubble {
+      background:#d9ad72;
+      border-color:#5e341c;
+      box-shadow:inset 0 0 0 2px rgba(245,215,162,.34),inset 0 0 14px rgba(71,33,14,.18);
+    }
+    .speech-bubble:before { background:#d9ad72; border-color:#5e341c; }
+    .order-title {
+      color:#f0d3a0;
+      background:linear-gradient(#7a4725,#57301a);
+      border-color:#2b160b;
+      text-shadow:1px 1px 0 #221006;
+    }
+    .order-chip {
+      background:linear-gradient(#dcb37b,#bd824a);
+      border-color:#623619;
+      box-shadow:0 3px 0 #4a2612,inset 0 0 0 2px rgba(248,220,168,.28);
+    }
+    .order-chip.done { background:#7f8e69; }
+
+    .board-frame > .progress-row {
+      color:#2b160c;
+      background:linear-gradient(#c99a60,#a56b3b);
+      border-color:#3b1e0f;
+    }
+    .tile {
+      background:linear-gradient(145deg,#e4bd80,#bd8147);
+      border-color:#63361b;
+      box-shadow:0 4px 0 #4b2713,inset 2px 2px 0 rgba(255,226,174,.42),inset -2px -2px 0 rgba(71,32,13,.2);
+    }
+    .controls {
+      background:
+        repeating-linear-gradient(90deg,rgba(231,180,104,.035) 0 1px,transparent 1px 9px),
+        linear-gradient(#60341a,#351b0e);
+    }
+    .btn,.controls .btn,.controls .btn.primary {
+      color:#f2d8aa;
+      background:linear-gradient(#9b6035,#6c3b1e);
+      border-color:#32180c;
+      box-shadow:0 4px 0 #1d0d06,inset 0 0 0 2px rgba(218,153,75,.33);
+      text-shadow:1px 1px 0 #2c1409;
+    }
+    .btn:hover:not(:disabled) { filter:brightness(1.14) saturate(.9); }
+    .btn:focus-visible { outline:3px solid #f0b853; outline-offset:2px; }
+    .message { color:#efd19a; background:rgba(24,55,45,.96); }
+    .rules-tip { color:#f0d29b; background:linear-gradient(#6e3e20,#4b2815); }
+
+    .right-rail .panel {
+      color:#2a170d;
+      background:
+        repeating-linear-gradient(0deg,rgba(49,23,9,.045) 0 1px,transparent 1px 8px),
+        linear-gradient(145deg,#a86c41,#7c4528);
+    }
+    .rail-title {
+      color:#f2d5a4;
+      background:
+        repeating-linear-gradient(90deg,rgba(239,190,116,.045) 0 1px,transparent 1px 9px),
+        linear-gradient(#85502b,#5a3018);
+      border-color:#2c170b;
+      text-shadow:1px 2px 0 #271208;
+      box-shadow:inset 0 0 0 2px rgba(203,138,69,.3);
+    }
+    .shop-level,.shop-metrics div {
+      color:#2a170d;
+      background:linear-gradient(#c18a55,#a56b3d);
+      border-color:#5e331a;
+      box-shadow:inset 0 0 0 2px rgba(240,201,141,.2);
+    }
+    .shop-badge {
+      color:#2a170d;
+      background:linear-gradient(#bd824e,#985d35);
+      border-color:#57301a;
+      box-shadow:inset 0 0 0 2px rgba(237,194,130,.18);
+    }
+    .shop-exp-track { background:#3c2111; border-color:#2b160b; }
+    .shop-exp-track span { background:linear-gradient(90deg,#b36a2f,#e2a341); }
+    .navigation-panel .btn {
+      background:linear-gradient(#8d542e,#61351b);
+      color:#f1d5a5;
+    }
+
+    .modal {
+      color:#2a170d;
+      border-color:#2d170b;
+      box-shadow:0 18px 38px rgba(15,6,2,.76),inset 0 0 0 3px #a86b3b;
+    }
+    .upgrade-card,.era-card,.collect-card,.achievement-card,.summary-box div {
+      color:#2a170d;
+      background:#bd8450;
+      border-color:#60351b;
+    }
+    .era-card.active,.achievement-card.done { background:#9a9d6e; border-color:#334a31; }
+    .collection-tabs .btn.active { background:#345b45; color:#f1d5a5; }
+
+    @media (max-width:720px) {
+      body { letter-spacing:0; }
+      .event-panel { min-height:126px; }
+      .stat strong { text-shadow:none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <aside class="left-rail" aria-label="손님 주문">
+      <header class="signboard">
+        <h1>추억의 문방구</h1>
+        <p id="eraSubtitle">1988년 · 골목 끝 작은 문방구</p>
+      </header>
+      <div class="progress-row customer-progress"><span><b>오늘의 손님</b> <span id="dayProgress">1 / 5</span></span><span id="wallet">보유 0원</span></div>
+      <section class="customer-panel current-customer" aria-label="현재 손님 주문">
+        <div class="customer-face" id="customerFace"><img id="customerPortrait" src="assets/customers/boy-01.webp" alt="오늘의 손님" draggable="false"></div>
+        <div class="customer-copy speech-bubble">
+          <strong id="customerName">첫 손님</strong>
+          <small id="customerLine">찾는 물건을 준비해 주세요.</small>
+        </div>
+        <h2 class="order-title">주문 상품</h2>
+        <div class="order-items" id="orderItems"></div>
+        <div class="order-bonus">주문 완료 시 추가 매출을 받을 수 있어요!</div>
+      </section>
+      <section class="customer-panel next-customer-panel" aria-label="다음 손님 미리보기">
+        <div class="customer-face"><img id="nextCustomerPortrait" src="assets/customers/girl-01.webp" alt="다음 손님" draggable="false"></div>
+        <div class="customer-copy speech-bubble">
+          <strong id="nextCustomerName">다음 손님</strong>
+          <small id="nextCustomerLine">곧 주문할 물건을 고르고 있어요.</small>
+        </div>
+        <h2 class="order-title">다음 주문 미리보기</h2>
+        <div class="order-items" id="nextOrderItems"></div>
+      </section>
+    </aside>
+
+    <section class="game-shell" aria-label="추억의 문방구 게임">
+      <section class="hud" aria-label="게임 상태">
+        <div class="stat" id="timeStat"><small>남은 시간</small><strong><span class="hud-icon">🕰️</span><span id="time">180</span></strong></div>
+        <div class="stat"><small>점수</small><strong id="score">0</strong></div>
+        <div class="stat"><small>콤보</small><strong><span id="combo">0</span><span class="combo-flame">🔥</span></strong></div>
+      </section>
+      <section class="board-frame">
+        <div class="progress-row"><span id="centerProgress">상품을 연결하세요</span><span id="centerEra">🧾 문방구 영업 중</span></div>
+        <div class="board-wrap">
+          <canvas id="pathCanvas"></canvas>
+          <div id="board" aria-label="게임 보드"></div>
+        </div>
+      </section>
+      <div class="controls">
+        <button class="btn primary" id="hintBtn">🔎 힌트 3</button>
+        <button class="btn" id="shuffleBtn">🔀 섞기</button>
+        <button class="btn" id="pauseBtn">⏸️ 일시정지</button>
+        <button class="btn" id="restartBtn">↻ 다시하기</button>
+      </div>
+      <div class="message" id="message" aria-live="polite">같은 물건 두 개를 골라보세요.</div>
+      <div class="rules-tip">같은 상품 2개를 연결하세요 · 선은 최대 2번 꺾을 수 있어요!</div>
+    </section>
+
+    <aside class="right-rail" aria-label="문방구 정보 및 업그레이드">
+      <section class="event-panel" aria-label="오늘의 영업 이벤트">
+        <div class="event-icon" id="eventIcon">☀️</div>
+        <div class="event-copy"><strong id="eventName">평범한 날</strong><small id="eventDesc">특별한 일 없이 영업합니다.</small></div>
+      </section>
+      <section class="panel info-panel">
+        <h2 class="rail-title">문방구 정보</h2>
+        <div class="shop-overview">
+          <div class="shop-visual" role="img" aria-label="추억의 문방구 가게 모습"></div>
+          <div class="shop-level"><strong id="shopLevel">레벨 1</strong><small>⭐ <span id="shopExp">0 / 4,000</span></small><span class="shop-exp-track"><span id="shopExpBar"></span></span></div>
+        </div>
+        <div class="shop-metrics">
+          <div><small>오늘 매출</small><strong id="coins">0원</strong></div>
+          <div><small>누적 매출</small><strong id="lifetimeSalesDisplay">0원</strong></div>
+          <div><small>보유 금액</small><strong id="rightWallet">0원</strong></div>
+        </div>
+      </section>
+      <section class="panel upgrade-panel">
+        <h2 class="rail-title">업그레이드</h2>
+        <div class="shop-summary" id="shopSummary"></div>
+      </section>
+      <section class="panel navigation-panel">
+        <div class="rail-actions">
+          <button class="btn" id="eraBtn"><span>📺</span>시대 선택</button>
+          <button class="btn" id="collectionBtn"><span>📚</span>도감 · 업적</button>
+          <button class="btn primary" id="shopBtn"><span>🏪</span>상점 꾸미기</button>
+        </div>
+      </section>
+    </aside>
+  </main>
+
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <h2 id="modalTitle">추억의 문방구</h2>
+      <p id="modalText">손님이 원하는 물건의 짝을 찾아 판매해 주세요.<br>손님 5명을 모두 응대하면 하루 영업이 끝납니다.</p>
+      <div class="modal-actions">
+        <button class="btn primary" id="mainActionBtn">게임 시작</button>
+        <button class="btn hidden" id="secondaryActionBtn">계속하기</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay hidden" id="eraOverlay">
+    <div class="modal">
+      <h2>추억의 시대</h2>
+      <p>누적 매출이 쌓이면 새로운 시대가 열립니다.<br><strong id="eraSales">누적 매출 0원</strong></p>
+      <div class="era-progress"><span id="eraProgressBar"></span></div>
+      <div class="era-note" id="eraProgressText"></div>
+      <div class="era-grid" id="eraList"></div>
+      <button class="btn primary" id="closeEraBtn">돌아가기</button>
+    </div>
+  </div>
+
+  <div class="overlay hidden" id="shopOverlay">
+    <div class="modal">
+      <h2>문방구 업그레이드</h2>
+      <p>누적 수익으로 영업 능력을 키워보세요.<br><strong id="shopWallet">보유 0원</strong></p>
+      <div class="upgrade-list" id="upgradeList"></div>
+      <button class="btn primary" id="closeShopBtn">돌아가기</button>
+    </div>
+  </div>
+
+  <div class="overlay hidden" id="collectionOverlay">
+    <div class="modal">
+      <h2>추억 도감</h2>
+      <p>영업 중 판매한 상품과 달성한 기록이 이곳에 남습니다.</p>
+      <div class="summary-box" id="careerSummary"></div>
+      <div class="collection-tabs">
+        <button class="btn active" id="itemsTabBtn">상품 도감</button>
+        <button class="btn" id="achievementsTabBtn">업적</button>
+      </div>
+      <div class="collection-grid" id="collectionGrid"></div>
+      <div class="achievement-list hidden" id="achievementList"></div>
+      <button class="btn primary" id="closeCollectionBtn">돌아가기</button>
+    </div>
+  </div>
+
+<script>
+(() => {
+  'use strict';
+  const ROWS = 6, COLS = 8, BASE_LIMIT = 180, CUSTOMERS_PER_DAY = 5;
+  const ACHIEVEMENTS = [
+    {id:'firstSale',icon:'🪙',name:'첫 판매',desc:'상품을 처음 판매한다',test:()=>discoveredItems.size>=1},
+    {id:'firstClear',icon:'🌙',name:'첫 영업 완료',desc:'하루 영업을 처음 완료한다',test:()=>Number(localStorage.getItem('memoryStationeryClears')||0)>=1},
+    {id:'tenPlays',icon:'📅',name:'단골 사장님',desc:'10번 영업을 시작한다',test:()=>Number(localStorage.getItem('memoryStationeryPlays')||0)>=10},
+    {id:'combo10',icon:'🔥',name:'빠른 손놀림',desc:'10콤보를 달성한다',test:()=>bestCombo>=10},
+    {id:'sales10k',icon:'💰',name:'동네 인기점',desc:'누적 매출 10,000원을 달성한다',test:()=>lifetimeSales>=10000},
+    {id:'allEras',icon:'🕰️',name:'시간 여행자',desc:'모든 시대를 해금한다',test:()=>unlockedEraCount()===ERAS.length},
+    {id:'allUpgrades',icon:'🏪',name:'완벽한 문방구',desc:'모든 업그레이드를 최고 레벨로 만든다',test:()=>Object.entries(UPGRADE_INFO).every(([k,v])=>upgrades[k]>=v.max)},
+    {id:'collector',icon:'📚',name:'추억 수집가',desc:'상품 24종을 발견한다',test:()=>discoveredItems.size>=24}
+  ];
+  const EVENTS = [
+    {icon:'☀️',name:'평범한 날',desc:'특별한 일 없이 차분하게 영업합니다.',time:0,customers:0,sales:1,hints:0,combo:3000},
+    {icon:'🌧️',name:'비 오는 날',desc:'손님은 적지만 한가해서 영업시간이 30초 늘어납니다.',time:30,customers:-1,sales:1,hints:0,combo:3500},
+    {icon:'🎒',name:'개학 준비',desc:'준비물을 찾는 손님이 몰려 매출이 25% 증가합니다.',time:0,customers:1,sales:1.25,hints:0,combo:3000},
+    {icon:'🎈',name:'어린이날 특수',desc:'손님이 한 명 더 오고 모든 판매금이 50% 증가합니다.',time:0,customers:1,sales:1.5,hints:0,combo:3000},
+    {icon:'💡',name:'정전 소동',desc:'조명이 어두워 힌트가 1회 줄지만 콤보 시간이 길어집니다.',time:0,customers:0,sales:1,hints:-1,combo:5000},
+    {icon:'🍀',name:'행운의 날',desc:'힌트가 2회 늘고 주문 완료 보너스가 커집니다.',time:0,customers:0,sales:1.2,hints:2,combo:3500}
+  ];
+  const ERAS = [
+    { year:'1988', name:'골목 끝 작은 문방구', unlock:0, accent:'#b94735', accent2:'#3d7457', street1:'#e8c891', street2:'#e2bf82',
+      background:'assets/backgrounds/shop-1995.webp',
+      items:[['🃏','딱지','assets/tiles/ttakji.webp'],['🔵','구슬','assets/tiles/marbles.webp'],['🌀','팽이','assets/tiles/spinning-top.webp'],['🪨','공기돌','assets/tiles/gonggi.webp'],['✏️','연필','assets/tiles/pencil.webp'],['🧽','지우개','assets/tiles/eraser.webp'],['📓','공책','assets/tiles/notebook.webp'],['📏','자','assets/tiles/ruler.webp'],['🍬','사탕','assets/tiles/candy.webp'],['🍘','쫀드기','assets/tiles/jjondeugi.webp'],['🎈','풍선','assets/tiles/balloon.webp'],['🪁','연','assets/tiles/kite.webp']] },
+    { year:'1995', name:'장난감이 가득한 문방구', unlock:4000, accent:'#386fa4', accent2:'#8f4f86', street1:'#b8d8e8', street2:'#9fc7dc',
+      background:'assets/backgrounds/shop-1995.webp',
+      items:[['🪀','요요','assets/tiles/yoyo.webp'],['🏎️','미니카','assets/tiles/minicar.webp'],['🃏','게임카드','assets/tiles/game-card.webp'],['🧩','퍼즐','assets/tiles/puzzle.webp'],['🎮','전자게임','assets/tiles/handheld-game.webp'],['📼','비디오','assets/tiles/vhs.webp'],['💾','디스켓','assets/tiles/floppy-disk.webp'],['🖍️','크레파스','assets/tiles/crayon-box.webp'],['🧸','인형','assets/tiles/teddy-bear.webp'],['🤖','로봇','assets/tiles/toy-robot.webp'],['🍭','막대사탕','assets/tiles/lollipop.webp'],['🥤','컵음료','assets/tiles/cup-drink.webp']] },
+    { year:'2002', name:'월드컵 거리의 문방구', unlock:12000, accent:'#d3483d', accent2:'#235b9a', street1:'#d7dfb3', street2:'#c2ce98',
+      items:[['⚽','축구공'],['🇰🇷','응원깃발'],['💿','음악CD'],['🎴','캐릭터카드'],['⌚','전자시계'],['📱','폴더폰'],['🎧','이어폰'],['🕹️','게임기'],['🖊️','젤펜'],['📔','캐릭터노트'],['🍫','초코바'],['🧃','팩주스']] },
+    { year:'2010', name:'디지털 세대의 문방구', unlock:25000, accent:'#5b4ab3', accent2:'#29907c', street1:'#d8c9eb', street2:'#c4b1df',
+      items:[['📱','스마트폰'],['🎧','헤드폰'],['💽','메모리카드'],['🎮','휴대게임기'],['🧱','블록완구'],['🧸','캐릭터인형'],['🖋️','컬러펜'],['📒','다이어리'],['✨','스티커'],['🔑','열쇠고리'],['🍪','쿠키'],['🧋','버블티']] }
+  ];
+  let selectedEra = Math.min(Number(localStorage.getItem('memoryStationeryEra') || 0), ERAS.length-1);
+  let ITEMS = ERAS[selectedEra].items;
+  const boardEl = document.getElementById('board');
+  const canvas = document.getElementById('pathCanvas');
+  const ctx = canvas.getContext('2d');
+  const PATH_GUTTER = 8;
+  const scoreEl = document.getElementById('score');
+  const coinsEl = document.getElementById('coins');
+  const eventIconEl = document.getElementById('eventIcon');
+  const eventNameEl = document.getElementById('eventName');
+  const eventDescEl = document.getElementById('eventDesc');
+  const customerFaceEl = document.getElementById('customerFace');
+  const customerPortraitEl = document.getElementById('customerPortrait');
+  const customerNameEl = document.getElementById('customerName');
+  const customerLineEl = document.getElementById('customerLine');
+  const orderItemsEl = document.getElementById('orderItems');
+  const nextCustomerPortraitEl = document.getElementById('nextCustomerPortrait');
+  const nextCustomerNameEl = document.getElementById('nextCustomerName');
+  const nextCustomerLineEl = document.getElementById('nextCustomerLine');
+  const nextOrderItemsEl = document.getElementById('nextOrderItems');
+  const dayProgressEl = document.getElementById('dayProgress');
+  const walletEl = document.getElementById('wallet');
+  const comboEl = document.getElementById('combo');
+  const timeEl = document.getElementById('time');
+  const timeStat = document.getElementById('timeStat');
+  const hintBtn = document.getElementById('hintBtn');
+  const shuffleBtn = document.getElementById('shuffleBtn');
+  const pauseBtn = document.getElementById('pauseBtn');
+  const restartBtn = document.getElementById('restartBtn');
+  const shopBtn = document.getElementById('shopBtn');
+  const eraBtn = document.getElementById('eraBtn');
+  const eraSubtitleEl = document.getElementById('eraSubtitle');
+  const eraOverlay = document.getElementById('eraOverlay');
+  const eraSalesEl = document.getElementById('eraSales');
+  const eraProgressBar = document.getElementById('eraProgressBar');
+  const eraProgressText = document.getElementById('eraProgressText');
+  const eraListEl = document.getElementById('eraList');
+  const closeEraBtn = document.getElementById('closeEraBtn');
+  const shopSummaryEl = document.getElementById('shopSummary');
+  const shopOverlay = document.getElementById('shopOverlay');
+  const shopWalletEl = document.getElementById('shopWallet');
+  const upgradeListEl = document.getElementById('upgradeList');
+  const closeShopBtn = document.getElementById('closeShopBtn');
+  const collectionBtn=document.getElementById('collectionBtn');
+  const collectionOverlay=document.getElementById('collectionOverlay');
+  const closeCollectionBtn=document.getElementById('closeCollectionBtn');
+  const itemsTabBtn=document.getElementById('itemsTabBtn');
+  const achievementsTabBtn=document.getElementById('achievementsTabBtn');
+  const collectionGrid=document.getElementById('collectionGrid');
+  const achievementList=document.getElementById('achievementList');
+  const careerSummary=document.getElementById('careerSummary');
+  const messageEl = document.getElementById('message');
+  const overlay = document.getElementById('overlay');
+  const modalTitle = document.getElementById('modalTitle');
+  const modalText = document.getElementById('modalText');
+  const mainActionBtn = document.getElementById('mainActionBtn');
+  const secondaryActionBtn = document.getElementById('secondaryActionBtn');
+  const rightWalletEl = document.getElementById('rightWallet');
+  const centerProgressEl = document.getElementById('centerProgress');
+  const lifetimeSalesDisplayEl = document.getElementById('lifetimeSalesDisplay');
+  const shopLevelEl = document.getElementById('shopLevel');
+  const shopExpEl = document.getElementById('shopExp');
+  const shopExpBarEl = document.getElementById('shopExpBar');
+
+  let grid = Array.from({length: ROWS+2}, () => Array(COLS+2).fill(null)), selected = null, score = 0, combo = 0, hints = 3, timeLeft = BASE_LIMIT;
+  let timer = null, running = false, paused = false, lastMatchAt = 0, usedHint = false;
+  let bestScore = Number(localStorage.getItem('memoryStationeryBest') || 0);
+  let totalCoins = Number(localStorage.getItem('memoryStationeryCoins') || 0);
+  let lifetimeSales = Number(localStorage.getItem('memoryStationeryLifetimeSales') || totalCoins);
+  if(lifetimeSales < ERAS[selectedEra].unlock){ selectedEra = Math.max(0, ERAS.findLastIndex(e=>lifetimeSales>=e.unlock)); ITEMS=ERAS[selectedEra].items; }
+  let dayCoins = 0, customerIndex = 0, currentOrder = [], customersServed = 0;
+  let todayEvent = EVENTS[0], targetCustomers = CUSTOMERS_PER_DAY;
+  let upgrades = JSON.parse(localStorage.getItem('memoryStationeryUpgrades') || '{"shelf":0,"register":0,"sign":0}');
+  let discoveredItems=new Set(JSON.parse(localStorage.getItem('memoryStationeryDiscovered')||'[]'));
+  let unlockedAchievements=new Set(JSON.parse(localStorage.getItem('memoryStationeryAchievements')||'[]'));
+  let bestCombo=Number(localStorage.getItem('memoryStationeryBestCombo')||0);
+  const UPGRADE_INFO = {
+    shelf:{icon:'🗄️',name:'튼튼한 진열대',desc:'레벨마다 영업시간 +15초',base:700,max:3},
+    register:{icon:'🧮',name:'빠른 계산대',desc:'레벨마다 주문 완료 매출 +50원',base:900,max:3},
+    sign:{icon:'🪧',name:'눈에 띄는 간판',desc:'레벨마다 시작 힌트 +1회',base:800,max:3}
+  };
+  const CUSTOMERS = [
+    ['🧒','민수','학교 가기 전에 얼른 부탁해요!','assets/customers/boy-01.webp'],
+    ['👧','지영','친구랑 같이 놀 물건을 찾고 있어요.','assets/customers/girl-01.webp'],
+    ['🧑‍🎓','준호','오늘 쉬는 시간에 필요해요!','assets/customers/boy-02.webp'],
+    ['👩','동네 엄마','아이 심부름으로 왔어요.','assets/customers/mother-01.webp'],
+    ['👨‍🏫','김 선생님','학급 준비물을 챙기러 왔습니다.','assets/customers/teacher-01.webp'],
+    ['🧑','옆집 형','오랜만에 추억의 물건을 사볼까요?','assets/customers/brother-01.webp']
+  ];
+
+  function makeDeck() {
+    const deck = [];
+    ITEMS.forEach((_, i) => { for (let n=0; n<4; n++) deck.push(i); });
+    return shuffle(deck);
+  }
+  function shuffle(arr) {
+    for (let i=arr.length-1; i>0; i--) {
+      const j = Math.floor(Math.random()*(i+1));
+      [arr[i],arr[j]]=[arr[j],arr[i]];
+    }
+    return arr;
+  }
+  function createGrid(deck) {
+    const g = Array.from({length: ROWS+2}, () => Array(COLS+2).fill(null));
+    let k=0;
+    for(let r=1;r<=ROWS;r++) for(let c=1;c<=COLS;c++) g[r][c]=deck[k++];
+    return g;
+  }
+  function startGame() {
+    clearInterval(timer);
+    todayEvent=EVENTS[Math.floor(Math.random()*EVENTS.length)];
+    targetCustomers=Math.max(3,CUSTOMERS_PER_DAY+todayEvent.customers);
+    score=0; combo=0; hints=Math.max(0,3+upgrades.sign+todayEvent.hints); timeLeft=BASE_LIMIT+(upgrades.shelf*15)+todayEvent.time; selected=null; usedHint=false; lastMatchAt=0;
+    dayCoins=0; customerIndex=0; customersServed=0; currentOrder=[];
+    grid=createGrid(makeDeck()); running=true; paused=false;
+    ensurePlayable(); createCustomerOrder(); renderEvent(); render(); updateHud(); hideOverlay();
+    messageEl.textContent=`${todayEvent.name}! 주문 상품을 연결해 판매해 보세요.`;
+    timer=setInterval(() => {
+      if(!running || paused) return;
+      timeLeft--;
+      if(timeLeft<=0){ timeLeft=0; updateHud(); endGame(false); return; }
+      updateHud();
+    },1000);
+    saveStat('memoryStationeryPlays');
+  }
+  function saveStat(key){ localStorage.setItem(key, String(Number(localStorage.getItem(key)||0)+1)); }
+  function updateHud(){
+    scoreEl.textContent=score; comboEl.textContent=combo; timeEl.textContent=timeLeft;
+    coinsEl.textContent=`${dayCoins.toLocaleString()}원`;
+    walletEl.textContent=`보유 ${totalCoins.toLocaleString()}원`;
+    if(rightWalletEl) rightWalletEl.textContent=`${totalCoins.toLocaleString()}원`;
+    if(lifetimeSalesDisplayEl) lifetimeSalesDisplayEl.textContent=`${lifetimeSales.toLocaleString()}원`;
+    const shopLevel=Math.floor(lifetimeSales/4000)+1, shopExp=lifetimeSales%4000;
+    if(shopLevelEl) shopLevelEl.textContent=`레벨 ${shopLevel}`;
+    if(shopExpEl) shopExpEl.textContent=`${shopExp.toLocaleString()} / 4,000`;
+    if(shopExpBarEl) shopExpBarEl.style.width=`${Math.min(100,shopExp/40)}%`;
+    if(centerProgressEl) centerProgressEl.textContent=`손님 ${Math.min(customersServed+1,targetCustomers)} / ${targetCustomers} · 상품을 연결하세요`;
+    dayProgressEl.textContent=`${Math.min(customersServed+1,targetCustomers)} / ${targetCustomers}`;
+    hintBtn.textContent=`힌트 ${hints}`; hintBtn.disabled=!running||paused||hints<=0;
+    shuffleBtn.disabled=!running||paused;
+    shopBtn.disabled=running&&!paused;
+    eraBtn.disabled=running&&!paused;
+    eraBtn.textContent=`시대 선택 · ${ERAS[selectedEra].year}`;
+    renderShopSummary();
+    pauseBtn.textContent=paused?'계속하기':'일시정지';
+    timeStat.classList.toggle('danger', timeLeft<=30);
+  }
+  function render(){
+    boardEl.innerHTML='';
+    for(let r=1;r<=ROWS;r++) for(let c=1;c<=COLS;c++) {
+      const value=grid[r][c];
+      const btn=document.createElement('button');
+      btn.className='tile'+(value===null?' empty':'');
+      btn.dataset.r=r; btn.dataset.c=c;
+      if(value!==null){
+        const art=ITEMS[value][2] ? `<img class="tile-art" src="${ITEMS[value][2]}" alt="" draggable="false">` : `<span class="emoji">${ITEMS[value][0]}</span>`;
+        btn.innerHTML=`${art}<span class="label">${ITEMS[value][1]}</span>`;
+        btn.setAttribute('aria-label', ITEMS[value][1]);
+        btn.addEventListener('click', () => choose(r,c));
+      }
+      if(selected && selected.r===r && selected.c===c) btn.classList.add('selected');
+      boardEl.appendChild(btn);
+    }
+    resizeCanvas();
+  }
+  function choose(r,c){
+    if(!running||paused||grid[r][c]===null) return;
+    if(!selected){ selected={r,c}; render(); return; }
+    if(selected.r===r && selected.c===c){ selected=null; render(); return; }
+    const first={...selected}; selected=null;
+    if(grid[first.r][first.c]===grid[r][c]){
+      const path=findPath(first,{r,c});
+      if(path){ handleMatch(first,{r,c},path); return; }
+    }
+    selected={r,c}; messageEl.textContent='연결할 수 없어요. 다른 짝을 찾아보세요.'; render();
+  }
+  function findPath(a,b){
+    const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+    const queue=[]; const seen=new Map();
+    for(let d=0;d<4;d++) queue.push({r:a.r,c:a.c,dir:d,turns:0,path:[a]});
+    while(queue.length){
+      const cur=queue.shift(); const [dr,dc]=dirs[cur.dir]; const nr=cur.r+dr, nc=cur.c+dc;
+      if(nr<0||nr>=ROWS+2||nc<0||nc>=COLS+2) continue;
+      if(!(nr===b.r&&nc===b.c) && grid[nr][nc]!==null) continue;
+      const key=`${nr},${nc},${cur.dir}`;
+      if((seen.get(key)??99)<=cur.turns) continue;
+      seen.set(key,cur.turns);
+      const nextPath=[...cur.path,{r:nr,c:nc}];
+      if(nr===b.r&&nc===b.c) return compressPath(nextPath);
+      queue.push({r:nr,c:nc,dir:cur.dir,turns:cur.turns,path:nextPath});
+      if(cur.turns<2){
+        for(let nd=0;nd<4;nd++) if(nd!==cur.dir && nd!==(cur.dir^1)) {
+          queue.push({r:nr,c:nc,dir:nd,turns:cur.turns+1,path:nextPath});
+        }
+      }
+    }
+    return null;
+  }
+  function compressPath(path){
+    if(path.length<=2) return path;
+    const out=[path[0]];
+    for(let i=1;i<path.length-1;i++){
+      const p=path[i-1], q=path[i], n=path[i+1];
+      if((p.r-q.r)!==(q.r-n.r) || (p.c-q.c)!==(q.c-n.c)) out.push(q);
+    }
+    out.push(path[path.length-1]); return out;
+  }
+  function handleMatch(a,b,path){
+    running=false;
+    drawPath(path);
+    const now=Date.now(); combo=(now-lastMatchAt<=todayEvent.combo)?combo+1:1; lastMatchAt=now;
+    const gained=Math.min(200,100+(combo-1)*10); score+=gained;
+    const matchedItem=grid[a.r][a.c];
+    discoverItem(matchedItem);
+    if(combo>bestCombo){ bestCombo=combo; localStorage.setItem('memoryStationeryBestCombo',String(bestCombo)); }
+    const sold = fulfillOrder(matchedItem);
+    messageEl.textContent=sold ? `${ITEMS[matchedItem][1]} 판매 완료! ${combo} 콤보` : `${combo} 콤보! 재고를 정리했어요.`;
+    const tiles=[getTile(a),getTile(b)]; tiles.forEach(t=>t&&t.classList.add('removing'));
+    setTimeout(()=>{
+      grid[a.r][a.c]=null; grid[b.r][b.c]=null; clearPath(); running=true;
+      if(customersServed>=targetCustomers){ endGame(true); return; }
+      if(isCleared()){ endGame(customersServed>=targetCustomers); return; }
+      if(!findAnyPair()) { shuffleRemaining(); messageEl.textContent='막힌 패를 자동으로 섞었어요.'; }
+      render(); renderCustomer(); updateHud();
+    },450);
+  }
+  function getTile(p){ return boardEl.querySelector(`[data-r="${p.r}"][data-c="${p.c}"]`); }
+  function findAnyPair(){
+    const pos=[];
+    for(let r=1;r<=ROWS;r++) for(let c=1;c<=COLS;c++) if(grid[r][c]!==null) pos.push({r,c,v:grid[r][c]});
+    for(let i=0;i<pos.length;i++) for(let j=i+1;j<pos.length;j++)
+      if(pos[i].v===pos[j].v){ const path=findPath(pos[i],pos[j]); if(path) return {a:pos[i],b:pos[j],path}; }
+    return null;
+  }
+  function shuffleRemaining(){
+    const values=[], spots=[];
+    for(let r=1;r<=ROWS;r++) for(let c=1;c<=COLS;c++) if(grid[r][c]!==null){ values.push(grid[r][c]); spots.push([r,c]); }
+    let attempts=0;
+    do {
+      shuffle(values); spots.forEach(([r,c],i)=>grid[r][c]=values[i]); attempts++;
+    } while(!findAnyPair() && attempts<200);
+  }
+  function ensurePlayable(){ if(!findAnyPair()) shuffleRemaining(); }
+  function isCleared(){
+    for(let r=1;r<=ROWS;r++) for(let c=1;c<=COLS;c++) if(grid[r][c]!==null) return false;
+    return true;
+  }
+
+  function availablePairTypes(){
+    const counts=new Map();
+    for(let r=1;r<=ROWS;r++) for(let c=1;c<=COLS;c++) if(grid[r][c]!==null)
+      counts.set(grid[r][c],(counts.get(grid[r][c])||0)+1);
+    return [...counts.entries()].filter(([,n])=>n>=2).map(([v])=>v);
+  }
+  function createCustomerOrder(){
+    const available=shuffle(availablePairTypes());
+    if(available.length<2){ currentOrder=available.map(v=>({item:v,done:false})); }
+    else currentOrder=available.slice(0,2).map(v=>({item:v,done:false}));
+    const profile=CUSTOMERS[customerIndex % CUSTOMERS.length];
+    customerFaceEl.setAttribute('aria-label',`${profile[1]} 손님`);
+    if(customerPortraitEl && profile[3]){ customerPortraitEl.src=profile[3]; customerPortraitEl.alt=`${profile[1]} 손님`; customerPortraitEl.classList.remove('hidden'); }
+    customerNameEl.textContent=profile[1]; customerLineEl.textContent=profile[2];
+    renderCustomer(); renderNextCustomer();
+  }
+  function renderCustomer(){
+    orderItemsEl.innerHTML='';
+    currentOrder.forEach(order=>{
+      const chip=document.createElement('div');
+      chip.className='order-chip'+(order.done?' done':'');
+      const art=ITEMS[order.item][2] ? `<img class="order-art" src="${ITEMS[order.item][2]}" alt="" draggable="false">` : `<span class="order-emoji">${ITEMS[order.item][0]}</span>`;
+      chip.innerHTML=`${art}${ITEMS[order.item][1]}`;
+      orderItemsEl.appendChild(chip);
+    });
+  }
+  function renderNextCustomer(){
+    if(!nextCustomerPortraitEl||!nextOrderItemsEl) return;
+    const profile=CUSTOMERS[(customerIndex+1)%CUSTOMERS.length];
+    nextCustomerPortraitEl.src=profile[3]; nextCustomerPortraitEl.alt=`${profile[1]} 다음 손님`;
+    nextCustomerNameEl.textContent=profile[1]; nextCustomerLineEl.textContent=profile[2];
+    const preview=[ITEMS[(customerIndex*2+2)%ITEMS.length],ITEMS[(customerIndex*2+3)%ITEMS.length]];
+    nextOrderItemsEl.innerHTML=preview.map(item=>{
+      const art=item[2] ? `<img class="order-art" src="${item[2]}" alt="" draggable="false">` : `<span class="order-emoji">${item[0]}</span>`;
+      return `<div class="order-chip">${art}${item[1]}</div>`;
+    }).join('');
+  }
+  function eventMoney(amount){ return Math.round(amount*todayEvent.sales/10)*10; }
+  function renderEvent(){
+    eventIconEl.textContent=todayEvent.icon; eventNameEl.textContent=todayEvent.name; eventDescEl.textContent=todayEvent.desc;
+  }
+  function fulfillOrder(item){
+    const target=currentOrder.find(o=>o.item===item && !o.done);
+    if(!target) return false;
+    const itemSale=eventMoney(100);
+    target.done=true; dayCoins+=itemSale; score+=100;
+    if(currentOrder.every(o=>o.done)){
+      const baseBonus=200+(upgrades.register*50);
+      const orderBonus=eventMoney(baseBonus);
+      dayCoins+=orderBonus; score+=300;
+      const earned=itemSale*2+orderBonus; totalCoins+=earned; lifetimeSales+=earned;
+      localStorage.setItem('memoryStationeryCoins',String(totalCoins));
+      localStorage.setItem('memoryStationeryLifetimeSales',String(lifetimeSales));
+      customersServed++; customerIndex++;
+      if(customersServed<targetCustomers){
+        setTimeout(()=>{ createCustomerOrder(); updateHud(); messageEl.textContent='새 손님이 들어왔어요!'; },260);
+      }
+    }
+    renderCustomer(); updateHud(); return true;
+  }
+
+
+  function discoverItem(item){
+    if(!item) return;
+    const key=item[1];
+    if(!discoveredItems.has(key)){
+      discoveredItems.add(key);
+      localStorage.setItem('memoryStationeryDiscovered',JSON.stringify([...discoveredItems]));
+      messageEl.textContent=`도감에 '${key}' 추억이 등록됐어요!`;
+    }
+    checkAchievements();
+  }
+  function checkAchievements(){
+    let changed=false;
+    ACHIEVEMENTS.forEach(a=>{ if(!unlockedAchievements.has(a.id)&&a.test()){ unlockedAchievements.add(a.id); changed=true; }});
+    if(changed) localStorage.setItem('memoryStationeryAchievements',JSON.stringify([...unlockedAchievements]));
+  }
+  function openCollection(){
+    if(running&&!paused) return;
+    checkAchievements(); renderCollection(); collectionOverlay.classList.remove('hidden');
+  }
+  function closeCollection(){ collectionOverlay.classList.add('hidden'); }
+  function renderCollection(){
+    const plays=Number(localStorage.getItem('memoryStationeryPlays')||0), clears=Number(localStorage.getItem('memoryStationeryClears')||0);
+    const allItems=ERAS.flatMap(e=>e.items); const unique=[...new Map(allItems.map(i=>[i[1],i])).values()];
+    careerSummary.innerHTML=`<div><strong>${plays}</strong><small>총 영업</small></div><div><strong>${clears}</strong><small>완료</small></div><div><strong>${discoveredItems.size}/${unique.length}</strong><small>수집</small></div>`;
+    collectionGrid.innerHTML=unique.map(i=>`<div class="collect-card ${discoveredItems.has(i[1])?'':'locked'}"><span class="icon">${discoveredItems.has(i[1])?i[0]:'❔'}</span><small>${discoveredItems.has(i[1])?i[1]:'미발견'}</small></div>`).join('');
+    achievementList.innerHTML=ACHIEVEMENTS.map(a=>`<div class="achievement-card ${unlockedAchievements.has(a.id)?'done':''}"><span class="icon">${unlockedAchievements.has(a.id)?a.icon:'🔒'}</span><div><strong>${a.name}</strong><small>${a.desc}</small></div><strong>${unlockedAchievements.has(a.id)?'달성':'진행 중'}</strong></div>`).join('');
+  }
+  function showCollectionTab(items){
+    itemsTabBtn.classList.toggle('active',items); achievementsTabBtn.classList.toggle('active',!items);
+    collectionGrid.classList.toggle('hidden',!items); achievementList.classList.toggle('hidden',items);
+  }
+
+  function unlockedEraCount(){
+    return ERAS.filter(e=>lifetimeSales>=e.unlock).length;
+  }
+  function applyEraTheme(){
+    const era=ERAS[selectedEra]; ITEMS=era.items;
+    const root=document.documentElement.style;
+    root.setProperty('--accent',era.accent); root.setProperty('--accent-2',era.accent2);
+    root.setProperty('--street-1',era.street1); root.setProperty('--street-2',era.street2);
+    const shell=document.querySelector('.game-shell');
+    if(shell) shell.style.backgroundImage=era.background ? `linear-gradient(rgba(12,27,26,.45),rgba(12,27,26,.55)),url("${era.background}")` : 'none';
+    eraSubtitleEl.textContent=`${era.year}년 · ${era.name}`;
+    document.title=`추억의 문방구 v0.5 · ${era.year}`;
+  }
+  function openEraSelect(){
+    if(running&&!paused) return;
+    renderEraSelect(); eraOverlay.classList.remove('hidden');
+  }
+  function closeEraSelect(){ eraOverlay.classList.add('hidden'); }
+  function renderEraSelect(){
+    eraSalesEl.textContent=`누적 매출 ${lifetimeSales.toLocaleString()}원`;
+    const next=ERAS.find(e=>lifetimeSales<e.unlock);
+    if(next){
+      const prevUnlock=selectedEra>0?ERAS[selectedEra].unlock:0;
+      const lower=Math.max(0, ...ERAS.filter(e=>e.unlock<=lifetimeSales).map(e=>e.unlock));
+      const pct=Math.max(0,Math.min(100,((lifetimeSales-lower)/(next.unlock-lower))*100));
+      eraProgressBar.style.width=`${pct}%`;
+      eraProgressText.textContent=`다음 시대 ${next.year}년까지 ${(next.unlock-lifetimeSales).toLocaleString()}원 남았습니다.`;
+    } else {
+      eraProgressBar.style.width='100%'; eraProgressText.textContent='모든 시대를 해금했습니다!';
+    }
+    eraListEl.innerHTML='';
+    ERAS.forEach((era,index)=>{
+      const unlocked=lifetimeSales>=era.unlock;
+      const card=document.createElement('div');
+      card.className='era-card'+(index===selectedEra?' active':'')+(unlocked?'':' locked');
+      card.innerHTML=`<div class="era-year">${era.year}</div><div><strong>${era.name}</strong><small>${unlocked?'상품 12종을 이 시대의 추억으로 교체합니다.':`누적 매출 ${era.unlock.toLocaleString()}원 필요`}</small></div>`;
+      const btn=document.createElement('button'); btn.className='btn';
+      btn.textContent=!unlocked?'잠김':index===selectedEra?'선택됨':'선택'; btn.disabled=!unlocked||index===selectedEra;
+      btn.addEventListener('click',()=>selectEra(index)); card.appendChild(btn); eraListEl.appendChild(card);
+    });
+  }
+  function selectEra(index){
+    if(lifetimeSales<ERAS[index].unlock) return;
+    selectedEra=index; localStorage.setItem('memoryStationeryEra',String(index)); applyEraTheme();
+    renderEraSelect(); renderNextCustomer(); updateHud(); messageEl.textContent=`${ERAS[index].year}년 문방구를 선택했어요.`;
+  }
+
+  function upgradeCost(key){
+    const info=UPGRADE_INFO[key];
+    return info.base*(upgrades[key]+1);
+  }
+  function renderShopSummary(){
+    shopSummaryEl.innerHTML=Object.entries(UPGRADE_INFO).map(([key,info])=>
+      `<div class="shop-badge"><span>${info.icon}</span>${info.name} Lv.${upgrades[key]}</div>`
+    ).join('');
+  }
+  function openShop(){
+    if(running&&!paused) return;
+    renderUpgradeShop();
+    shopOverlay.classList.remove('hidden');
+  }
+  function closeShop(){ shopOverlay.classList.add('hidden'); }
+  function renderUpgradeShop(){
+    shopWalletEl.textContent=`보유 ${totalCoins.toLocaleString()}원`;
+    upgradeListEl.innerHTML='';
+    Object.entries(UPGRADE_INFO).forEach(([key,info])=>{
+      const level=upgrades[key], maxed=level>=info.max, cost=upgradeCost(key);
+      const card=document.createElement('div'); card.className='upgrade-card';
+      card.innerHTML=`<div class="upgrade-icon">${info.icon}</div><div><strong>${info.name} Lv.${level}/${info.max}</strong><small>${info.desc}</small></div>`;
+      const btn=document.createElement('button'); btn.className='btn';
+      btn.textContent=maxed?'최고 레벨':`${cost.toLocaleString()}원`;
+      btn.disabled=maxed||totalCoins<cost;
+      btn.addEventListener('click',()=>buyUpgrade(key));
+      card.appendChild(btn); upgradeListEl.appendChild(card);
+    });
+  }
+  function buyUpgrade(key){
+    const info=UPGRADE_INFO[key], cost=upgradeCost(key);
+    if(upgrades[key]>=info.max||totalCoins<cost) return;
+    totalCoins-=cost; upgrades[key]++;
+    localStorage.setItem('memoryStationeryCoins',String(totalCoins));
+    localStorage.setItem('memoryStationeryUpgrades',JSON.stringify(upgrades));
+    renderUpgradeShop(); updateHud(); checkAchievements();
+    messageEl.textContent=`${info.name}을(를) Lv.${upgrades[key]}로 업그레이드했어요!`;
+  }
+
+  function useHint(){
+    if(!running||paused||hints<=0) return;
+    const pair=findAnyPair();
+    if(!pair){ shuffleRemaining(); render(); return; }
+    hints--; usedHint=true; updateHud();
+    [getTile(pair.a),getTile(pair.b)].forEach(t=>t&&t.classList.add('hint'));
+    messageEl.textContent='초록색으로 반짝이는 짝을 확인하세요.';
+    hintBtn.disabled=true; setTimeout(updateHud,2000);
+  }
+  function useShuffle(){
+    if(!running||paused) return;
+    selected=null;
+    shuffleRemaining();
+    clearPath();
+    render();
+    messageEl.textContent='남은 상품을 섞어 새 길을 만들었어요.';
+  }
+  function togglePause(){
+    if(!running && !paused) return;
+    paused=!paused; updateHud();
+    if(paused){ showOverlay('잠시 쉬어가기','게임 시간이 멈췄습니다.','처음부터', '계속하기'); }
+    else hideOverlay();
+  }
+  function endGame(cleared){
+    clearInterval(timer); running=false; paused=false;
+    if(cleared){
+      score += timeLeft*20 + (usedHint?0:500);
+      dayCoins += timeLeft*2; totalCoins += timeLeft*2; lifetimeSales += timeLeft*2;
+      localStorage.setItem('memoryStationeryCoins',String(totalCoins));
+      localStorage.setItem('memoryStationeryLifetimeSales',String(lifetimeSales));
+      saveStat('memoryStationeryClears');
+      if(score>bestScore){ bestScore=score; localStorage.setItem('memoryStationeryBest',String(bestScore)); }
+      updateHud(); checkAchievements();
+      showOverlay('오늘 영업 완료!',`${todayEvent.icon} <strong>${todayEvent.name}</strong><br>손님 ${customersServed}명을 모두 응대했습니다.<br>오늘 매출은 <strong>${dayCoins.toLocaleString()}원</strong>, 최종 점수는 <strong>${score}</strong>점입니다.<br>업그레이드로 다음 영업을 준비할 수 있습니다.`,'다음 날 영업','업그레이드');
+    } else {
+      showOverlay('영업시간 종료',`손님 ${customersServed}명을 응대하고 <strong>${dayCoins.toLocaleString()}원</strong>을 벌었습니다.<br>다시 도전해 모든 손님을 만족시켜 보세요.`,'다시 도전');
+    }
+  }
+  function showOverlay(title,text,mainText,secondaryText=''){
+    modalTitle.textContent=title; modalText.innerHTML=text; mainActionBtn.textContent=mainText;
+    secondaryActionBtn.textContent=secondaryText;
+    secondaryActionBtn.classList.toggle('hidden',!secondaryText);
+    overlay.classList.remove('hidden');
+  }
+  function hideOverlay(){ overlay.classList.add('hidden'); }
+  function resizeCanvas(){
+    const rect=boardEl.getBoundingClientRect(); const dpr=window.devicePixelRatio||1;
+    const cellW=rect.width/COLS, cellH=rect.height/ROWS;
+    const width=rect.width+cellW+PATH_GUTTER*2, height=rect.height+cellH+PATH_GUTTER*2;
+    canvas.style.left=(boardEl.offsetLeft-cellW/2-PATH_GUTTER)+'px';
+    canvas.style.top=(boardEl.offsetTop-cellH/2-PATH_GUTTER)+'px';
+    canvas.style.right='auto'; canvas.style.bottom='auto';
+    canvas.width=Math.round(width*dpr); canvas.height=Math.round(height*dpr);
+    canvas.style.width=width+'px'; canvas.style.height=height+'px'; ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  function pointFor(cell){
+    const boardRect=boardEl.getBoundingClientRect();
+    const cellW=boardRect.width/COLS, cellH=boardRect.height/ROWS;
+    return { x:PATH_GUTTER+cell.c*cellW, y:PATH_GUTTER+cell.r*cellH };
+  }
+  function drawPath(path){
+    clearPath(); ctx.lineWidth=5; ctx.strokeStyle='#d84e32'; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.beginPath();
+    path.forEach((p,i)=>{ const pt=pointFor(p); if(i===0) ctx.moveTo(pt.x,pt.y); else ctx.lineTo(pt.x,pt.y); }); ctx.stroke();
+  }
+  function clearPath(){ ctx.clearRect(0,0,canvas.width,canvas.height); }
+
+  hintBtn.addEventListener('click',useHint);
+  shuffleBtn.addEventListener('click',useShuffle);
+  pauseBtn.addEventListener('click',togglePause);
+  restartBtn.addEventListener('click',startGame);
+  mainActionBtn.addEventListener('click',startGame);
+  secondaryActionBtn.addEventListener('click',()=>{
+    if(!running && secondaryActionBtn.textContent==='업그레이드'){ hideOverlay(); openShop(); return; }
+    paused=false; hideOverlay(); updateHud();
+  });
+  shopBtn.addEventListener('click',openShop);
+  eraBtn.addEventListener('click',openEraSelect);
+  closeEraBtn.addEventListener('click',closeEraSelect);
+  closeShopBtn.addEventListener('click',closeShop);
+  collectionBtn.addEventListener('click',openCollection);
+  closeCollectionBtn.addEventListener('click',closeCollection);
+  itemsTabBtn.addEventListener('click',()=>showCollectionTab(true));
+  achievementsTabBtn.addEventListener('click',()=>showCollectionTab(false));
+  window.addEventListener('resize',()=>{ resizeCanvas(); clearPath(); });
+  document.addEventListener('visibilitychange',()=>{ if(document.hidden && running && !paused) togglePause(); });
+  checkAchievements(); applyEraTheme(); renderEvent(); updateHud(); render(); renderCustomer(); renderNextCustomer(); renderShopSummary();
+})();
+</script>
+</body>
+</html>
